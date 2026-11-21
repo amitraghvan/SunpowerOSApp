@@ -14,3 +14,4 @@ export * from './supplier.contract';
 export * from './procurement.contract';
 export * from './inbound.contract';
 export * from './inventory.contract';
+export * from './installation.contract';

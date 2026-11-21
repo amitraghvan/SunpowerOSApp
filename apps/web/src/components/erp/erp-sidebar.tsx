@@ -33,7 +33,16 @@ import {
   ArrowLeftRight,
   CheckSquare,
   Scale,
-  RotateCcw
+  RotateCcw,
+  Wrench,
+  HardHat,
+  Calendar,
+  ClipboardCheck,
+  ShieldAlert,
+  Gauge,
+  Zap,
+  CheckCircle2,
+  Smartphone
 } from 'lucide-react';
 
 interface SidebarItem {
@@ -103,6 +112,23 @@ const sidebarGroups: SidebarGroup[] = [
       { label: 'Outbound Dispatch & POD', href: '/inventory/dispatch', icon: Truck },
       { label: 'Counts & Adjustments', href: '/inventory/adjustments', icon: Scale },
       { label: 'Customer Returns', href: '/inventory/returns', icon: RotateCcw },
+    ],
+  },
+  {
+    id: 'installation',
+    title: 'Site Execution & Installation',
+    items: [
+      { label: 'Execution Cockpit', href: '/installation', icon: Gauge },
+      { label: 'Active Projects', href: '/installation/projects', icon: Sun },
+      { label: 'Technicians & Crews', href: '/installation/technicians', icon: HardHat },
+      { label: 'Site Schedules', href: '/installation/schedules', icon: Calendar },
+      { label: 'Work Orders & Tasks', href: '/installation/work-orders', icon: Wrench },
+      { label: 'Material Custody (MHO)', href: '/installation/material-handover', icon: Boxes },
+      { label: 'Safety & Quality Gates', href: '/installation/safety-quality', icon: ShieldAlert },
+      { label: 'Testing & Commissioning', href: '/installation/commissioning', icon: Zap },
+      { label: 'DISCOM & Net Metering', href: '/installation/discom', icon: FileSpreadsheet },
+      { label: 'Customer Handover', href: '/installation/handover', icon: CheckCircle2 },
+      { label: 'Field Technician App', href: '/technician', icon: Smartphone },
     ],
   },
   {

@@ -28,7 +28,22 @@ export type SequenceEntityType =
   | 'PACKING'
   | 'DISPATCH'
   | 'CHALLAN'
-  | 'CUSTOMER_RETURN';
+  | 'CUSTOMER_RETURN'
+  // Phase 5 Sequence Types
+  | 'TECHNICIAN'
+  | 'CREW'
+  | 'SCHEDULE'
+  | 'READINESS'
+  | 'WORK_ORDER'
+  | 'MATERIAL_HANDOVER'
+  | 'CONSUMPTION'
+  | 'SAFETY'
+  | 'INCIDENT'
+  | 'INSTALLATION_QUALITY'
+  | 'COMMISSIONING'
+  | 'UTILITY_TRACKING'
+  | 'CUSTOMER_HANDOVER'
+  | 'PROJECT_COST';
 
 @Injectable()
 export class NumberingService {

@@ -1227,4 +1227,427 @@ export class ApiClient {
       body: JSON.stringify(data),
     });
   }
+
+  // ===========================================================================
+  // Phase 5: Solar Installation, Project Execution, Testing & Commissioning
+  // ===========================================================================
+
+  // 1. Cockpit & Projects
+  static async getInstallationCockpit() {
+    return this.request<any>('/installation/cockpit');
+  }
+
+  static async getInstallationProjects(params?: Record<string, any>) {
+    const query = params ? `?${new URLSearchParams(params).toString()}` : '';
+    return this.request<any[]>(`/installation/projects${query}`);
+  }
+
+  static async getInstallationProjectById(id: string) {
+    return this.request<any>(`/installation/projects/${id}`);
+  }
+
+  static async updateInstallationProjectStatus(id: string, data: { status: string; notes?: string }) {
+    return this.request<any>(`/installation/projects/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async updateInstallationProjectPlanning(id: string, data: any) {
+    return this.request<any>(`/installation/projects/${id}/planning`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // 2. Technicians & Crews
+  static async getTechnicians(params?: Record<string, any>) {
+    const query = params ? `?${new URLSearchParams(params).toString()}` : '';
+    return this.request<any[]>(`/installation/technicians${query}`);
+  }
+
+  static async getTechnicianById(id: string) {
+    return this.request<any>(`/installation/technicians/${id}`);
+  }
+
+  static async createTechnician(data: any) {
+    return this.request<any>('/installation/technicians', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async updateTechnician(id: string, data: any) {
+    return this.request<any>(`/installation/technicians/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async addTechnicianSkill(id: string, data: any) {
+    return this.request<any>(`/installation/technicians/${id}/skills`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async addTechnicianCertification(id: string, data: any) {
+    return this.request<any>(`/installation/technicians/${id}/certifications`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async getCrews(params?: Record<string, any>) {
+    const query = params ? `?${new URLSearchParams(params).toString()}` : '';
+    return this.request<any[]>(`/installation/crews${query}`);
+  }
+
+  static async getCrewById(id: string) {
+    return this.request<any>(`/installation/crews/${id}`);
+  }
+
+  static async createCrew(data: any) {
+    return this.request<any>('/installation/crews', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async updateCrew(id: string, data: any) {
+    return this.request<any>(`/installation/crews/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async addCrewMember(crewId: string, data: any) {
+    return this.request<any>(`/installation/crews/${crewId}/members`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async removeCrewMember(crewId: string, techId: string) {
+    return this.request<any>(`/installation/crews/${crewId}/members/${techId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  static async assignCrewToProject(projectId: string, crewId: string) {
+    return this.request<any>(`/installation/projects/${projectId}/assign-crew`, {
+      method: 'POST',
+      body: JSON.stringify({ crewId }),
+    });
+  }
+
+  static async assignTechnicianToProject(projectId: string, data: any) {
+    return this.request<any>(`/installation/projects/${projectId}/assign-technician`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // 3. Scheduling
+  static async getInstallationSchedules(params?: Record<string, any>) {
+    const query = params ? `?${new URLSearchParams(params).toString()}` : '';
+    return this.request<any[]>(`/installation/schedules${query}`);
+  }
+
+  static async createInstallationSchedule(data: any) {
+    return this.request<any>('/installation/schedules', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async rescheduleInstallationVisit(id: string, data: any) {
+    return this.request<any>(`/installation/schedules/${id}/reschedule`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // 4. Site Readiness
+  static async createSiteReadinessRecord(data: any) {
+    return this.request<any>('/installation/readiness', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async getSiteReadiness(projectId: string) {
+    return this.request<any>(`/installation/readiness/${projectId}`);
+  }
+
+  static async recordSiteReadinessCheck(id: string, data: any) {
+    return this.request<any>(`/installation/readiness/${id}/checks`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async authorizeSiteReadinessException(id: string, data: any) {
+    return this.request<any>(`/installation/readiness/${id}/authorize-exception`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async approveSiteReadiness(id: string) {
+    return this.request<any>(`/installation/readiness/${id}/approve`, {
+      method: 'POST',
+    });
+  }
+
+  // 5. Work Orders & Tasks
+  static async getInstallationWorkOrders(params?: Record<string, any>) {
+    const query = params ? `?${new URLSearchParams(params).toString()}` : '';
+    return this.request<any[]>(`/installation/work-orders${query}`);
+  }
+
+  static async getInstallationWorkOrderById(id: string) {
+    return this.request<any>(`/installation/work-orders/${id}`);
+  }
+
+  static async createInstallationWorkOrder(data: any) {
+    return this.request<any>('/installation/work-orders', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async updateInstallationTaskStatus(id: string, data: any) {
+    return this.request<any>(`/installation/tasks/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async assignTechnicianToWorkOrder(id: string, data: any) {
+    return this.request<any>(`/installation/work-orders/${id}/assign-technician`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async updateInstallationMilestone(id: string, data: any) {
+    return this.request<any>(`/installation/milestones/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // 6. Material Handover & Custody
+  static async createMaterialHandover(data: any) {
+    return this.request<any>('/installation/material-handover', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async verifyMaterialHandoverLine(id: string, data: any) {
+    return this.request<any>(`/installation/material-handover/${id}/verify-line`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async acceptMaterialHandover(id: string, data: any) {
+    return this.request<any>(`/installation/material-handover/${id}/accept`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async recordMaterialConsumption(data: any) {
+    return this.request<any>('/installation/material-consumption', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // 7. Safety Management & Quality Inspections
+  static async createSafetyRecord(data: any) {
+    return this.request<any>('/installation/safety', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async addSafetyObservation(id: string, data: any) {
+    return this.request<any>(`/installation/safety/${id}/observations`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async issueStopWork(id: string, data: any) {
+    return this.request<any>(`/installation/safety/${id}/stop-work`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async liftStopWork(id: string, data: any) {
+    return this.request<any>(`/installation/safety/${id}/lift-stop-work`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async reportSafetyIncident(data: any) {
+    return this.request<any>('/installation/safety/incidents', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async createQualityInspection(data: any) {
+    return this.request<any>('/installation/quality', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async resolveQualityRework(id: string, data: any) {
+    return this.request<any>(`/installation/quality/${id}/resolve-rework`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // 8. Testing & Commissioning
+  static async createCommissioningRecord(data: any) {
+    return this.request<any>('/installation/commissioning', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async recordCommissioningTest(id: string, data: any) {
+    return this.request<any>(`/installation/commissioning/${id}/tests`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async approveCommissioning(id: string, data?: any) {
+    return this.request<any>(`/installation/commissioning/${id}/approve`, {
+      method: 'POST',
+      body: JSON.stringify(data || {}),
+    });
+  }
+
+  static async rejectCommissioning(id: string, data: any) {
+    return this.request<any>(`/installation/commissioning/${id}/reject`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // 9. DISCOM & Utility Tracking
+  static async createUtilityTracking(data: any) {
+    return this.request<any>('/installation/utility-tracking', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async getUtilityTracking(projectId: string) {
+    return this.request<any>(`/installation/utility-tracking/${projectId}`);
+  }
+
+  static async updateUtilityTracking(id: string, data: any) {
+    return this.request<any>(`/installation/utility-tracking/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // 10. Customer Handover & Punchlist
+  static async createCustomerHandover(data: any) {
+    return this.request<any>('/installation/customer-handover', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async getCustomerHandover(projectId: string) {
+    return this.request<any>(`/installation/customer-handover/${projectId}`);
+  }
+
+  static async addPunchlistItem(id: string, data: any) {
+    return this.request<any>(`/installation/customer-handover/${id}/punchlist`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async resolvePunchlistItem(id: string, data: any) {
+    return this.request<any>(`/installation/punchlist/${id}/resolve`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async signOffCustomerHandover(id: string, data: any) {
+    return this.request<any>(`/installation/customer-handover/${id}/sign-off`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // 11. Project Cost Records
+  static async createProjectCost(data: any) {
+    return this.request<any>('/installation/costs', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async getProjectCosts(projectId: string) {
+    return this.request<any[]>(`/installation/costs/${projectId}`);
+  }
+
+  static async getProjectCostSummary(projectId: string) {
+    return this.request<any>(`/installation/costs/${projectId}/summary`);
+  }
+
+  // 12. Mobile Technician Workspace
+  static async getTechnicianMyProfile() {
+    return this.request<any>('/technician/my-profile');
+  }
+
+  static async getTechnicianMyAssignments() {
+    return this.request<any>('/technician/my-assignments');
+  }
+
+  static async technicianCompleteTask(id: string, data: any) {
+    return this.request<any>(`/technician/tasks/${id}/complete`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async technicianVerifyLine(id: string, data: any) {
+    return this.request<any>(`/technician/material-handover/${id}/verify-line`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async technicianSubmitSafety(data: any) {
+    return this.request<any>('/technician/safety-review', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async technicianSubmitCommissioning(data: any) {
+    return this.request<any>('/technician/commissioning', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
 }
