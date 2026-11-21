@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { ApiClient } from '@/lib/api-client';
 import { MarketingNavbar } from '@/components/marketing/marketing-navbar';
 import { MarketingFooter } from '@/components/marketing/marketing-footer';
 import {
@@ -11,11 +12,16 @@ import {
   Send,
   CheckCircle2,
   Building,
-  HelpCircle
+  HelpCircle,
+  AlertCircle,
+  Loader2,
 } from 'lucide-react';
 
 export default function ContactPage() {
+  const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [referenceNumber, setReferenceNumber] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
   const [formState, setFormState] = useState({
     name: '',
     email: '',
@@ -25,9 +31,31 @@ export default function ContactPage() {
     message: '',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    setSubmitting(true);
+    setErrorMessage('');
+
+    try {
+      const res = await ApiClient.submitPublicEnquiry({
+        name: formState.name,
+        email: formState.email,
+        company: formState.company,
+        phone: formState.phone,
+        projectCapacity: formState.systemCapacity,
+        message: formState.message,
+        sourceUrl: typeof window !== 'undefined' ? window.location.href : '/contact',
+      });
+
+      if (res?.referenceNumber) {
+        setReferenceNumber(res.referenceNumber);
+      }
+      setSubmitted(true);
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Failed to submit enquiry. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -122,12 +150,28 @@ export default function ContactPage() {
                     <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto">
                       <CheckCircle2 className="w-8 h-8" />
                     </div>
-                    <h3 className="text-2xl font-bold text-[#151A2B]">Message Received</h3>
-                    <p className="text-sm text-[#737B8B] max-w-md mx-auto">
-                      Thank you for reaching out. A SunPower Solutions EPC specialist will respond to your inquiry shortly.
+                    <h3 className="text-2xl font-bold text-[#151A2B]">Enquiry Received</h3>
+                    {referenceNumber && (
+                      <div className="inline-block px-4 py-2 rounded-xl bg-[#F1EAF0] text-[#714B67] font-mono font-bold text-sm tracking-wide">
+                        Reference ID: {referenceNumber}
+                      </div>
+                    )}
+                    <p className="text-sm text-[#737B8B] max-w-md mx-auto leading-relaxed">
+                      Thank you for contacting SunPower Solutions. Your enquiry has been routed directly to our commercial solar engineering team.
                     </p>
                     <button
-                      onClick={() => setSubmitted(false)}
+                      onClick={() => {
+                        setSubmitted(false);
+                        setReferenceNumber('');
+                        setFormState({
+                          name: '',
+                          email: '',
+                          company: '',
+                          phone: '',
+                          systemCapacity: '1-10 kW (Residential)',
+                          message: '',
+                        });
+                      }}
                       className="btn-secondary !py-2 !px-6 text-xs mt-4"
                     >
                       Send Another Inquiry
@@ -136,6 +180,13 @@ export default function ContactPage() {
                 ) : (
                   <form onSubmit={handleSubmit} className="space-y-5">
                     <h3 className="text-xl font-bold text-[#151A2B] mb-2">Send an Inquiry</h3>
+
+                    {errorMessage && (
+                      <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2">
+                        <AlertCircle className="w-4 h-4 shrink-0" />
+                        <span>{errorMessage}</span>
+                      </div>
+                    )}
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
@@ -228,10 +279,20 @@ export default function ContactPage() {
 
                     <button
                       type="submit"
-                      className="btn-primary w-full !py-3 font-semibold text-sm justify-center"
+                      disabled={submitting}
+                      className="btn-primary w-full !py-3 font-semibold text-sm justify-center disabled:opacity-60"
                     >
-                      <Send className="w-4 h-4 mr-2" />
-                      <span>Submit Inquiry</span>
+                      {submitting ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          <span>Routing Inquiry...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Send className="w-4 h-4 mr-2" />
+                          <span>Submit Inquiry</span>
+                        </>
+                      )}
                     </button>
                   </form>
                 )}

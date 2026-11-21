@@ -388,4 +388,12 @@ describe('Phase 2 — Sales Orders, Commercial Prerequisites & Project Initiatio
     expect(confirmed.projectInitiation?.bomSnapshot).toBeDefined();
     expect(confirmed.projectInitiation?.designSnapshot).toBeDefined();
   });
+
+  it('should list Sales Orders for tenant', async () => {
+    const list = await salesOrdersService.listOrders(tenantOrg.organizationId);
+    expect(list).toBeDefined();
+    expect(Array.isArray(list)).toBe(true);
+    expect(list.length).toBeGreaterThan(0);
+    expect(list[0].customer).toBeDefined();
+  });
 });

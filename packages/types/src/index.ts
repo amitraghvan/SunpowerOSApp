@@ -17,3 +17,4 @@ export * from './procurement';
 export * from './inbound';
 export * from './inventory';
 export * from './installation';
+export * from './platform-admin';

@@ -33,7 +33,7 @@ export class EngineeringController {
   @Post('designs')
   @RequirePermissions('engineering:designs:manage')
   async createDesign(
-    @CurrentTenant() organizationId: string,
+    @CurrentTenant('organizationId') organizationId: string,
     @CurrentUser('id') userId: string,
     @Body() dto: CreateDesignDto,
   ) {
@@ -43,7 +43,7 @@ export class EngineeringController {
   @Get('designs')
   @RequirePermissions('engineering:designs:read')
   async listDesigns(
-    @CurrentTenant() organizationId: string,
+    @CurrentTenant('organizationId') organizationId: string,
     @Query('customerId') customerId?: string,
     @Query('status') status?: string,
   ) {
@@ -53,7 +53,7 @@ export class EngineeringController {
   @Get('designs/:id')
   @RequirePermissions('engineering:designs:read')
   async getDesign(
-    @CurrentTenant() organizationId: string,
+    @CurrentTenant('organizationId') organizationId: string,
     @Param('id') id: string,
   ) {
     return await this.engineeringService.getDesign(organizationId, id);
@@ -62,7 +62,7 @@ export class EngineeringController {
   @Post('designs/:id/revisions/:revNum/configure')
   @RequirePermissions('engineering:designs:manage')
   async configureRevision(
-    @CurrentTenant() organizationId: string,
+    @CurrentTenant('organizationId') organizationId: string,
     @CurrentUser('id') userId: string,
     @Param('id') id: string,
     @Param('revNum', ParseIntPipe) revNum: number,
@@ -80,7 +80,7 @@ export class EngineeringController {
   @Post('designs/:id/revisions/:revNum/calculate')
   @RequirePermissions('engineering:calculations:run')
   async runCalculations(
-    @CurrentTenant() organizationId: string,
+    @CurrentTenant('organizationId') organizationId: string,
     @CurrentUser('id') userId: string,
     @Param('id') id: string,
     @Param('revNum', ParseIntPipe) revNum: number,
@@ -98,7 +98,7 @@ export class EngineeringController {
   @Post('designs/:id/approve')
   @RequirePermissions('engineering:designs:approve')
   async approveDesign(
-    @CurrentTenant() organizationId: string,
+    @CurrentTenant('organizationId') organizationId: string,
     @CurrentUser('id') userId: string,
     @Param('id') id: string,
   ) {
@@ -108,7 +108,7 @@ export class EngineeringController {
   @Post('designs/:id/revisions/:revNum/generate-bom')
   @RequirePermissions('bom:boms:manage')
   async generateBom(
-    @CurrentTenant() organizationId: string,
+    @CurrentTenant('organizationId') organizationId: string,
     @CurrentUser('id') userId: string,
     @Param('id') id: string,
     @Param('revNum', ParseIntPipe) revNum: number,
@@ -124,7 +124,7 @@ export class EngineeringController {
   @Get('boms/:id')
   @RequirePermissions('bom:boms:read')
   async getBom(
-    @CurrentTenant() organizationId: string,
+    @CurrentTenant('organizationId') organizationId: string,
     @Param('id') id: string,
   ) {
     return await this.bomService.getBomById(organizationId, id);
@@ -133,7 +133,7 @@ export class EngineeringController {
   @Post('boms/:id/approve')
   @RequirePermissions('bom:boms:approve')
   async approveBom(
-    @CurrentTenant() organizationId: string,
+    @CurrentTenant('organizationId') organizationId: string,
     @CurrentUser('id') userId: string,
     @Param('id') id: string,
   ) {

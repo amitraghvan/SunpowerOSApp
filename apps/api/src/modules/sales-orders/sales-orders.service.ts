@@ -316,9 +316,13 @@ export class SalesOrdersService {
   /**
    * 5. List Sales Orders for Tenant
    */
-  async listOrders(organizationId: string, query?: { customerId?: string; status?: string }) {
-    return await this.prisma.forTenant(organizationId, async (tx) => {
-      const where: any = { organizationId };
+  async listOrders(organizationId: string | { organizationId: string }, query?: { customerId?: string; status?: string }) {
+    const orgId =
+      typeof organizationId === 'object' && organizationId !== null && 'organizationId' in organizationId
+        ? (organizationId as any).organizationId
+        : organizationId;
+    return await this.prisma.forTenant(orgId, async (tx) => {
+      const where: any = { organizationId: orgId };
       if (query?.customerId) where.customerId = query.customerId;
       if (query?.status) where.status = query.status;
 

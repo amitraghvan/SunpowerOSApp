@@ -1650,4 +1650,237 @@ export class ApiClient {
       body: JSON.stringify(data),
     });
   }
+
+  // ===========================================================================
+  // PUBLIC WEBSITE ENQUIRIES
+  // ===========================================================================
+  static async submitPublicEnquiry(data: {
+    name: string;
+    email: string;
+    company?: string;
+    phone?: string;
+    category?: string;
+    projectCapacity?: string;
+    message: string;
+    sourceUrl?: string;
+  }) {
+    return this.request<{ success: boolean; referenceNumber: string; message: string }>('/enquiries', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // ===========================================================================
+  // PLATFORM ADMIN PORTAL
+  // ===========================================================================
+  static async platformLogin(data: { email: string; password: string }) {
+    const res = await this.request<any>('/platform-admin/auth/login', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    if (res?.accessToken) {
+      this.setSessionToken(res.accessToken);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('solaros_platform_token', res.accessToken);
+        localStorage.setItem('solaros_platform_admin', JSON.stringify(res.admin));
+      }
+    }
+    return res;
+  }
+
+  static async getPlatformMe() {
+    return this.request<any>('/platform-admin/auth/me');
+  }
+
+  static async getPlatformOverview() {
+    return this.request<any>('/platform-admin/overview');
+  }
+
+  static async getPlatformOrganizations(params?: Record<string, any>) {
+    const query = params ? `?${new URLSearchParams(params).toString()}` : '';
+    return this.request<any>(`/platform-admin/organizations${query}`);
+  }
+
+  static async getPlatformOrganizationDetail(id: string) {
+    return this.request<any>(`/platform-admin/organizations/${id}`);
+  }
+
+  static async suspendPlatformOrganization(id: string, reason: string) {
+    return this.request<any>(`/platform-admin/organizations/${id}/suspend`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    });
+  }
+
+  static async reactivatePlatformOrganization(id: string, notes?: string) {
+    return this.request<any>(`/platform-admin/organizations/${id}/reactivate`, {
+      method: 'POST',
+      body: JSON.stringify({ notes }),
+    });
+  }
+
+  static async updatePlatformOrganizationSubscription(id: string, data: any) {
+    return this.request<any>(`/platform-admin/organizations/${id}/subscription`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async getPlatformEnquiries(params?: Record<string, any>) {
+    const query = params ? `?${new URLSearchParams(params).toString()}` : '';
+    return this.request<any>(`/platform-admin/enquiries${query}`);
+  }
+
+  static async getPlatformEnquiryDetail(id: string) {
+    return this.request<any>(`/platform-admin/enquiries/${id}`);
+  }
+
+  static async updatePlatformEnquiryStatus(id: string, status: string, notes?: string) {
+    return this.request<any>(`/platform-admin/enquiries/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status, notes }),
+    });
+  }
+
+  static async assignPlatformEnquiry(id: string, assignedToId: string) {
+    return this.request<any>(`/platform-admin/enquiries/${id}/assign`, {
+      method: 'PATCH',
+      body: JSON.stringify({ assignedToId }),
+    });
+  }
+
+  static async addPlatformEnquiryNote(id: string, notes: string) {
+    return this.request<any>(`/platform-admin/enquiries/${id}/notes`, {
+      method: 'POST',
+      body: JSON.stringify({ notes }),
+    });
+  }
+
+  static async getPlatformSupportTickets(params?: Record<string, any>) {
+    const query = params ? `?${new URLSearchParams(params).toString()}` : '';
+    return this.request<any>(`/platform-admin/support/tickets${query}`);
+  }
+
+  static async getPlatformSupportTicketDetail(id: string) {
+    return this.request<any>(`/platform-admin/support/tickets/${id}`);
+  }
+
+  static async replyPlatformSupportTicket(id: string, message: string, isInternalOnly?: boolean) {
+    return this.request<any>(`/platform-admin/support/tickets/${id}/reply`, {
+      method: 'POST',
+      body: JSON.stringify({ message, isInternalOnly }),
+    });
+  }
+
+  static async updatePlatformSupportTicketStatus(id: string, status: string, resolutionNotes?: string) {
+    return this.request<any>(`/platform-admin/support/tickets/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status, resolutionNotes }),
+    });
+  }
+
+  static async assignPlatformSupportTicket(id: string, assignedToId: string) {
+    return this.request<any>(`/platform-admin/support/tickets/${id}/assign`, {
+      method: 'PATCH',
+      body: JSON.stringify({ assignedToId }),
+    });
+  }
+
+  static async getPlatformAnalytics() {
+    return this.request<any>('/platform-admin/analytics');
+  }
+
+  static async getPlatformHealth() {
+    return this.request<any>('/platform-admin/health');
+  }
+
+  static async getPlatformAlerts(params?: Record<string, any>) {
+    const query = params ? `?${new URLSearchParams(params).toString()}` : '';
+    return this.request<any>(`/platform-admin/alerts${query}`);
+  }
+
+  static async acknowledgePlatformAlert(id: string) {
+    return this.request<any>(`/platform-admin/alerts/${id}/acknowledge`, {
+      method: 'POST',
+    });
+  }
+
+  static async resolvePlatformAlert(id: string, notes?: string) {
+    return this.request<any>(`/platform-admin/alerts/${id}/resolve`, {
+      method: 'POST',
+      body: JSON.stringify({ notes }),
+    });
+  }
+
+  static async getPlatformAuditLogs(params?: Record<string, any>) {
+    const query = params ? `?${new URLSearchParams(params).toString()}` : '';
+    return this.request<any>(`/platform-admin/audit-logs${query}`);
+  }
+
+  static async getPlatformAdministrators() {
+    return this.request<any>('/platform-admin/administrators');
+  }
+
+  static async createPlatformAdministrator(data: any) {
+    return this.request<any>('/platform-admin/administrators', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async updatePlatformAdministrator(id: string, data: any) {
+    return this.request<any>(`/platform-admin/administrators/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async getPlatformPlans() {
+    return this.request<any>('/platform-admin/plans');
+  }
+
+  static async createPlatformPlan(data: any) {
+    return this.request<any>('/platform-admin/plans', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async updatePlatformPlan(id: string, data: any) {
+    return this.request<any>(`/platform-admin/plans/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // ===========================================================================
+  // TENANT SUPPORT IN ERP
+  // ===========================================================================
+  static async createTenantSupportTicket(data: {
+    subject: string;
+    category?: string;
+    priority?: string;
+    message: string;
+  }) {
+    return this.request<any>('/support/tickets', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async getTenantSupportTickets(params?: Record<string, any>) {
+    const query = params ? `?${new URLSearchParams(params).toString()}` : '';
+    return this.request<any>(`/support/tickets${query}`);
+  }
+
+  static async getTenantSupportTicketDetail(id: string) {
+    return this.request<any>(`/support/tickets/${id}`);
+  }
+
+  static async replyTenantSupportTicket(id: string, message: string) {
+    return this.request<any>(`/support/tickets/${id}/messages`, {
+      method: 'POST',
+      body: JSON.stringify({ message }),
+    });
+  }
 }

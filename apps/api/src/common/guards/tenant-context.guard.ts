@@ -94,7 +94,7 @@ export class TenantContextGuard implements CanActivate {
       permissions = [];
     }
 
-    const tenantContext: TenantContext = {
+    const tenantContext: TenantContext & { toString: () => string; valueOf: () => string } = {
       organizationId: organization.id,
       organizationSlug: organization.slug,
       organizationName: organization.name,
@@ -103,6 +103,12 @@ export class TenantContextGuard implements CanActivate {
       userEmail: user ? user.email : '',
       roles,
       permissions,
+      toString() {
+        return this.organizationId;
+      },
+      valueOf() {
+        return this.organizationId;
+      },
     };
 
     request.tenantContext = tenantContext;

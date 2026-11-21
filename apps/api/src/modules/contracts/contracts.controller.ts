@@ -24,7 +24,7 @@ export class ContractsController {
   @Post()
   @RequirePermissions('contract:contracts:manage')
   async generateContract(
-    @CurrentTenant() organizationId: string,
+    @CurrentTenant('organizationId') organizationId: string,
     @CurrentUser('id') userId: string,
     @Body() dto: GenerateContractDto,
   ) {
@@ -34,7 +34,7 @@ export class ContractsController {
   @Get()
   @RequirePermissions('contract:contracts:read')
   async listContracts(
-    @CurrentTenant() organizationId: string,
+    @CurrentTenant('organizationId') organizationId: string,
     @Query('customerId') customerId?: string,
     @Query('status') status?: string,
   ) {
@@ -44,7 +44,7 @@ export class ContractsController {
   @Get(':id')
   @RequirePermissions('contract:contracts:read')
   async getContract(
-    @CurrentTenant() organizationId: string,
+    @CurrentTenant('organizationId') organizationId: string,
     @Param('id') id: string,
   ) {
     return await this.contractsService.getContract(organizationId, id);
@@ -53,7 +53,7 @@ export class ContractsController {
   @Post(':id/sign')
   @RequirePermissions('contract:contracts:sign')
   async signContract(
-    @CurrentTenant() organizationId: string,
+    @CurrentTenant('organizationId') organizationId: string,
     @CurrentUser('id') userId: string,
     @Param('id') id: string,
     @Body() dto: SignContractDto,

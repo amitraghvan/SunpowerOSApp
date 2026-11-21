@@ -61,9 +61,13 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
    * Executes a callback within a database transaction scoped to a specific tenant context.
    * Sets PostgreSQL session variable `app.current_organization_id` to enforce Row Level Security (RLS).
    */
-  async forTenant<T>(tenantId: string, fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {
+  async forTenant<T>(tenantId: string | { organizationId: string }, fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {
+    const orgId =
+      typeof tenantId === 'object' && tenantId !== null && 'organizationId' in tenantId
+        ? (tenantId as any).organizationId
+        : tenantId;
     return this.$transaction(async (tx) => {
-      await tx.$executeRawUnsafe(`SET LOCAL app.current_organization_id = '${tenantId}'`);
+      await tx.$executeRawUnsafe(`SET LOCAL app.current_organization_id = '${orgId}'`);
       return fn(tx);
     });
   }

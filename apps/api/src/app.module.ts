@@ -65,6 +65,7 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { WorkflowModule } from './modules/workflow/workflow.module';
 import { IntegrationsModule } from './modules/integrations/integrations.module';
 import { AiCopilotModule } from './modules/ai-copilot/ai-copilot.module';
+import { PlatformAdminModule } from './modules/platform-admin/platform-admin.module';
 
 @Module({
   imports: [
@@ -145,6 +146,7 @@ import { AiCopilotModule } from './modules/ai-copilot/ai-copilot.module';
     WorkflowModule,
     IntegrationsModule,
     AiCopilotModule,
+    PlatformAdminModule,
   ],
 })
 export class AppModule implements NestModule {

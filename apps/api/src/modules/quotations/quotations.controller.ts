@@ -24,7 +24,7 @@ export class QuotationsController {
   @Post()
   @RequirePermissions('quotation:quotations:manage')
   async createQuotation(
-    @CurrentTenant() organizationId: string,
+    @CurrentTenant('organizationId') organizationId: string,
     @CurrentUser('id') userId: string,
     @Body() dto: CreateQuotationDto,
   ) {
@@ -34,7 +34,7 @@ export class QuotationsController {
   @Get()
   @RequirePermissions('quotation:quotations:read')
   async listQuotations(
-    @CurrentTenant() organizationId: string,
+    @CurrentTenant('organizationId') organizationId: string,
     @Query('customerId') customerId?: string,
     @Query('status') status?: string,
   ) {
@@ -44,7 +44,7 @@ export class QuotationsController {
   @Get(':id')
   @RequirePermissions('quotation:quotations:read')
   async getQuotation(
-    @CurrentTenant() organizationId: string,
+    @CurrentTenant('organizationId') organizationId: string,
     @Param('id') id: string,
   ) {
     return await this.quotationsService.getQuotation(organizationId, id);
@@ -53,7 +53,7 @@ export class QuotationsController {
   @Post(':id/approve')
   @RequirePermissions('quotation:quotations:approve')
   async approveQuotation(
-    @CurrentTenant() organizationId: string,
+    @CurrentTenant('organizationId') organizationId: string,
     @CurrentUser('id') userId: string,
     @Param('id') id: string,
   ) {
@@ -63,7 +63,7 @@ export class QuotationsController {
   @Post(':id/accept')
   @RequirePermissions('quotation:quotations:manage')
   async recordAcceptance(
-    @CurrentTenant() organizationId: string,
+    @CurrentTenant('organizationId') organizationId: string,
     @CurrentUser('id') userId: string,
     @Param('id') id: string,
     @Body() dto: RecordQuotationAcceptanceDto,

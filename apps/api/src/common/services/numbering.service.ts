@@ -43,7 +43,11 @@ export type SequenceEntityType =
   | 'COMMISSIONING'
   | 'UTILITY_TRACKING'
   | 'CUSTOMER_HANDOVER'
-  | 'PROJECT_COST';
+  | 'PROJECT_COST'
+  // Platform Admin Sequence Types
+  | 'PLATFORM_ENQUIRY'
+  | 'SUPPORT_TICKET'
+  | 'PLATFORM_ALERT';
 
 @Injectable()
 export class NumberingService {
@@ -94,5 +98,45 @@ export class NumberingService {
       );
       return documentNumber;
     });
+  }
+
+  /**
+   * Generates a concurrency-safe, gap-free unique document number for platform-level records
+   * Format: {PREFIX}-{YYYY}-{000001}
+   */
+  async getNextPlatformDocumentNumber(
+    entityType: SequenceEntityType | string,
+    prefix: string,
+    targetYear?: number,
+  ): Promise<string> {
+    const year = targetYear || new Date().getFullYear();
+
+    const sequence = await this.prisma.platformSequence.upsert({
+      where: {
+        entityType_prefix_year: {
+          entityType,
+          prefix,
+          year,
+        },
+      },
+      create: {
+        entityType,
+        prefix,
+        year,
+        lastNumber: 1,
+      },
+      update: {
+        lastNumber: {
+          increment: 1,
+        },
+      },
+    });
+
+    const paddedNumber = String(sequence.lastNumber).padStart(6, '0');
+    const documentNumber = `${prefix}-${year}-${paddedNumber}`;
+    this.logger.debug(
+      `Generated platform document number: ${documentNumber} [${entityType}]`,
+    );
+    return documentNumber;
   }
 }

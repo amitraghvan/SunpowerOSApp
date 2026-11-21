@@ -18,6 +18,10 @@ model Organization {
   legalName     String?
   taxIdentifier String?
   isActive      Boolean   @default(true)
+  status        String    @default("ACTIVE") // PENDING_VERIFICATION, ONBOARDING, TRIAL, ACTIVE, SUSPENDED, CLOSED
+  suspensionReason String?
+  suspendedAt   DateTime?
+  suspendedById String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   deletedAt     DateTime?
@@ -144,6 +148,8 @@ model Organization {
   handoverPunchlistItems         HandoverPunchlistItem[]
   handoverDocuments              HandoverDocument[]
   projectCosts                   ProjectCostRecord[]
+  supportTickets                 SupportTicket[]
+  subscription                   OrganizationSubscription?
 
   @@map("organizations")
 }
@@ -288,6 +294,9 @@ model User {
   conductedCustomerHandovers  CustomerHandover[]              @relation("HandoverConductedBy")
   resolvedPunchlistItems      HandoverPunchlistItem[]         @relation("PunchlistResolvedBy")
   approvedProjectCosts        ProjectCostRecord[]             @relation("CostApprovedBy")
+  platformAdministrator       PlatformAdministrator?
+  submittedSupportTickets     SupportTicket[]                 @relation("SubmittedSupportTickets")
+  sentSupportMessages         SupportTicketMessage[]          @relation("SentSupportMessages")
 
   @@map("users")
 }
@@ -4005,4 +4014,210 @@ model ProjectCostRecord {
   @@index([workOrderId])
   @@index([costCategory])
   @@map("project_cost_records")
+}
+
+// ============================================================================
+// SUNPOWEROS PLATFORM ADMINISTRATION MODELS
+// ============================================================================
+
+model PlatformSequence {
+  id         String   @id @default(uuid())
+  entityType String   // PLATFORM_ENQUIRY, SUPPORT_TICKET, PLATFORM_ALERT
+  prefix     String   // ENQ, TCK, ALT
+  year       Int
+  lastNumber Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([entityType, prefix, year])
+  @@map("platform_sequences")
+}
+
+model PlatformAdministrator {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  role        String   @default("PLATFORM_ADMIN") // PLATFORM_OWNER, PLATFORM_ADMIN, PLATFORM_SUPPORT, PLATFORM_ANALYST, PLATFORM_READ_ONLY
+  isActive    Boolean  @default(true)
+  permissions String[] @default([])
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  assignedEnquiries      PlatformEnquiry[]
+  assignedSupportTickets SupportTicket[]
+
+  @@map("platform_administrators")
+}
+
+model PlatformEnquiry {
+  id              String   @id @default(uuid())
+  referenceNumber String   @unique // ENQ-YYYY-000001
+  name            String
+  email           String
+  company         String?
+  phone           String?
+  category        String   @default("GENERAL_INQUIRY") // GENERAL_INQUIRY, SALES_DEMO, ENTERPRISE_PRICING, PARTNERSHIP, CUSTOM_INTEGRATION, OTHER
+  projectCapacity String?
+  message         String
+  status          String   @default("NEW") // NEW, IN_REVIEW, CONTACTED, QUALIFIED, CONVERTED, CLOSED
+  assignedToId    String?
+  internalNotes   String?
+  sourceUrl       String?
+  ipAddress       String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  assignedTo PlatformAdministrator?   @relation(fields: [assignedToId], references: [id], onDelete: SetNull)
+  activities PlatformEnquiryActivity[]
+
+  @@index([status])
+  @@index([category])
+  @@index([assignedToId])
+  @@map("platform_enquiries")
+}
+
+model PlatformEnquiryActivity {
+  id           String   @id @default(uuid())
+  enquiryId    String
+  actorId      String?
+  activityType String   // STATUS_CHANGE, ASSIGNMENT, NOTE_ADDED, EMAIL_SENT, CONVERTED
+  details      Json?
+  createdAt    DateTime @default(now())
+
+  enquiry PlatformEnquiry @relation(fields: [enquiryId], references: [id], onDelete: Cascade)
+
+  @@index([enquiryId])
+  @@map("platform_enquiry_activities")
+}
+
+model SupportTicket {
+  id              String    @id @default(uuid())
+  ticketNumber    String    @unique // TCK-YYYY-000001
+  organizationId  String
+  submittedById   String
+  subject         String
+  category        String    @default("GENERAL") // BILLING, TECHNICAL, FEATURE_REQUEST, BUG_REPORT, ACCOUNT_ACCESS, GENERAL
+  priority        String    @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
+  status          String    @default("OPEN") // OPEN, IN_PROGRESS, WAITING_ON_CUSTOMER, RESOLVED, CLOSED
+  assignedToId    String?
+  resolutionNotes String?
+  resolvedAt      DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  organization Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  submittedBy  User                   @relation("SubmittedSupportTickets", fields: [submittedById], references: [id], onDelete: Cascade)
+  assignedTo   PlatformAdministrator? @relation(fields: [assignedToId], references: [id], onDelete: SetNull)
+  messages     SupportTicketMessage[]
+
+  @@index([organizationId])
+  @@index([status])
+  @@index([priority])
+  @@index([assignedToId])
+  @@map("support_tickets")
+}
+
+model SupportTicketMessage {
+  id             String   @id @default(uuid())
+  ticketId       String
+  senderId       String
+  senderType     String   @default("TENANT_USER") // TENANT_USER, PLATFORM_ADMIN
+  message        String
+  isInternalOnly Boolean  @default(false)
+  attachments    String[] @default([])
+  createdAt      DateTime @default(now())
+
+  ticket SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  sender User          @relation("SentSupportMessages", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId])
+  @@map("support_ticket_messages")
+}
+
+model PlatformAlert {
+  id               String    @id @default(uuid())
+  alertNumber      String    @unique // ALT-YYYY-000001
+  severity         String    @default("INFO") // INFO, WARNING, HIGH, CRITICAL
+  category         String    // INFRASTRUCTURE, SECURITY, DATABASE, STORAGE, WORKER, SUBSCRIPTION
+  source           String    // e.g. "StorageMonitor", "WorkerHealth", "AuthGuard"
+  title            String
+  message          String
+  details          Json?
+  status           String    @default("OPEN") // OPEN, ACKNOWLEDGED, RESOLVED
+  acknowledgedById String?
+  acknowledgedAt   DateTime?
+  resolvedById     String?
+  resolvedAt       DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([severity])
+  @@index([status])
+  @@index([category])
+  @@map("platform_alerts")
+}
+
+model PlatformAuditEvent {
+  id           String   @id @default(uuid())
+  actorId      String
+  actorEmail   String?
+  platformRole String?
+  action       String   // ORG_SUSPENDED, ORG_REACTIVATED, ADMIN_INVITED, ROLE_UPDATED, ALERT_RESOLVED, ENQUIRY_STATUS_CHANGE, TICKET_RESOLVED
+  targetType   String   // ORGANIZATION, PLATFORM_ADMIN, SUPPORT_TICKET, ENQUIRY, SYSTEM
+  targetId     String?
+  reason       String?
+  metadata     Json?
+  ipAddress    String?
+  userAgent    String?
+  createdAt    DateTime @default(now())
+
+  @@index([action])
+  @@index([targetType])
+  @@index([targetId])
+  @@index([actorId])
+  @@map("platform_audit_events")
+}
+
+model SaaSPlan {
+  id           String   @id @default(uuid())
+  code         String   @unique // STARTER, GROWTH, ENTERPRISE
+  name         String
+  description  String?
+  monthlyPrice Decimal  @db.Decimal(12, 2)
+  annualPrice  Decimal  @db.Decimal(12, 2)
+  maxUsers     Int      @default(5)
+  maxStorageMb Int      @default(5120)
+  maxProjects  Int      @default(50)
+  features     String[] @default([])
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  subscriptions OrganizationSubscription[]
+
+  @@map("saas_plans")
+}
+
+model OrganizationSubscription {
+  id             String    @id @default(uuid())
+  organizationId String    @unique
+  planId         String
+  status         String    @default("TRIAL") // TRIAL, ACTIVE, PAST_DUE, CANCELLED
+  startDate      DateTime  @default(now())
+  renewalDate    DateTime?
+  cancelledAt    DateTime?
+  seatLimit      Int       @default(5)
+  storageLimitMb Int       @default(5120)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  plan         SaaSPlan     @relation(fields: [planId], references: [id], onDelete: Restrict)
+
+  @@index([organizationId])
+  @@index([planId])
+  @@index([status])
+  @@map("organization_subscriptions")
 }

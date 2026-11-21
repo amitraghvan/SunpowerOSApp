@@ -28,7 +28,7 @@ export class SalesOrdersController {
   @Post()
   @RequirePermissions('sales_order:orders:manage')
   async createSalesOrder(
-    @CurrentTenant() organizationId: string,
+    @CurrentTenant('organizationId') organizationId: string,
     @CurrentUser('id') userId: string,
     @Body() dto: CreateSalesOrderDto,
   ) {
@@ -38,7 +38,7 @@ export class SalesOrdersController {
   @Get()
   @RequirePermissions('sales_order:orders:read')
   async listOrders(
-    @CurrentTenant() organizationId: string,
+    @CurrentTenant('organizationId') organizationId: string,
     @Query('customerId') customerId?: string,
     @Query('status') status?: string,
   ) {
@@ -48,7 +48,7 @@ export class SalesOrdersController {
   @Get(':id')
   @RequirePermissions('sales_order:orders:read')
   async getOrder(
-    @CurrentTenant() organizationId: string,
+    @CurrentTenant('organizationId') organizationId: string,
     @Param('id') id: string,
   ) {
     return await this.salesOrdersService.getOrder(organizationId, id);
@@ -57,7 +57,7 @@ export class SalesOrdersController {
   @Post(':id/advance-payment')
   @RequirePermissions('sales_order:orders:manage')
   async recordAdvancePayment(
-    @CurrentTenant() organizationId: string,
+    @CurrentTenant('organizationId') organizationId: string,
     @CurrentUser('id') userId: string,
     @Param('id') id: string,
     @Body() dto: RecordAdvancePaymentDto,
@@ -73,7 +73,7 @@ export class SalesOrdersController {
   @Post(':id/confirm')
   @RequirePermissions('sales_order:orders:confirm')
   async confirmOrder(
-    @CurrentTenant() organizationId: string,
+    @CurrentTenant('organizationId') organizationId: string,
     @CurrentUser('id') userId: string,
     @Param('id') id: string,
     @Body() dto: ConfirmSalesOrderDto,
