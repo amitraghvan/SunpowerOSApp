@@ -3,6 +3,7 @@ import { ValidationPipe, Logger } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
 import compression from 'compression';
+import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
@@ -16,6 +17,7 @@ async function bootstrap() {
   // Security headers & compression
   app.use(helmet());
   app.use(compression());
+  app.use(cookieParser());
 
   // Global Correlation ID
   app.use(new CorrelationIdMiddleware().use);

@@ -1,12 +1,10 @@
 import { Module } from '@nestjs/common';
+import { CustomersService } from './customers.service';
+import { CustomersController } from './customers.controller';
 
-/**
- * Customers Domain Module (Commercial)
- * Customer accounts, residential and commercial client profiles, and contact history
- */
 @Module({
-  controllers: [],
-  providers: [],
-  exports: [],
+  controllers: [CustomersController],
+  providers: [CustomersService],
+  exports: [CustomersService],
 })
 export class CustomersModule {}

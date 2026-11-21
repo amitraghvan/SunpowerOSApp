@@ -19,7 +19,7 @@ export class EnvironmentVariables {
 
   @IsString()
   @IsOptional()
-  DATABASE_URL: string = 'postgresql://postgres:postgres_local_password@localhost:5432/solaros_dev?schema=public';
+  DATABASE_URL: string = 'postgresql://solaros_app:solaros_secret_app_pw@localhost:5432/solaros_dev?schema=public';
 
   @IsString()
   @IsOptional()

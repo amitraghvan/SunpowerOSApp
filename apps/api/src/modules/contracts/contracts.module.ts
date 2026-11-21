@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common';
+import { ContractsService } from './contracts.service';
+import { ContractsController } from './contracts.controller';
+import { NumberingService } from '../../common/services/numbering.service';
+import { AccessControlModule } from '../access-control/access-control.module';
 
-/**
- * Contracts Domain Module (Commercial)
- * Digital customer contracts, warranty agreements, terms, and digital signatures
- */
 @Module({
-  controllers: [],
-  providers: [],
-  exports: [],
+  imports: [AccessControlModule],
+  controllers: [ContractsController],
+  providers: [ContractsService, NumberingService],
+  exports: [ContractsService],
 })
 export class ContractsModule {}

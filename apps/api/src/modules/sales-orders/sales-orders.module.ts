@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common';
+import { SalesOrdersService } from './sales-orders.service';
+import { SalesOrdersController } from './sales-orders.controller';
+import { NumberingService } from '../../common/services/numbering.service';
+import { AccessControlModule } from '../access-control/access-control.module';
 
-/**
- * SalesOrders Domain Module (Commercial)
- * Confirmed solar sales orders, payment milestone schedules, and execution authorization
- */
 @Module({
-  controllers: [],
-  providers: [],
-  exports: [],
+  imports: [AccessControlModule],
+  controllers: [SalesOrdersController],
+  providers: [SalesOrdersService, NumberingService],
+  exports: [SalesOrdersService],
 })
 export class SalesOrdersModule {}

@@ -1,12 +1,10 @@
 import { Module } from '@nestjs/common';
+import { OrganizationsService } from './organizations.service';
+import { OrganizationsController } from './organizations.controller';
 
-/**
- * Organizations Domain Module (Foundation)
- * Multi-tenant organization profiles, branches, and tenant settings
- */
 @Module({
-  controllers: [],
-  providers: [],
-  exports: [],
+  controllers: [OrganizationsController],
+  providers: [OrganizationsService],
+  exports: [OrganizationsService],
 })
 export class OrganizationsModule {}

@@ -1,12 +1,10 @@
 import { Module } from '@nestjs/common';
+import { CatalogService } from './catalog.service';
+import { CatalogController } from './catalog.controller';
 
-/**
- * Catalog Domain Module (Commercial)
- * Product catalog for PV panels, inverters, batteries, structures, and balance of systems
- */
 @Module({
-  controllers: [],
-  providers: [],
-  exports: [],
+  controllers: [CatalogController],
+  providers: [CatalogService],
+  exports: [CatalogService],
 })
 export class CatalogModule {}

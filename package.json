@@ -12,7 +12,7 @@
     "dev": "turbo run dev",
     "lint": "prettier --check \"**/*.{ts,tsx,js,json,md}\"",
     "check-types": "tsc -p packages/types/tsconfig.json --noEmit && tsc -p packages/contracts/tsconfig.json --noEmit && tsc -p packages/config/tsconfig.json --noEmit && tsc -p packages/ui/tsconfig.json --noEmit && tsc -p database/tsconfig.json --noEmit && tsc -p apps/api/tsconfig.json --noEmit && tsc -p apps/web/tsconfig.json --noEmit",
-    "test": "node apps/api/node_modules/jest/bin/jest.js --config=jest.config.js",
+    "test": "node apps/api/node_modules/jest/bin/jest.js --config=jest.config.js --runInBand",
     "test:e2e": "playwright test",
     "clean": "rm -rf node_modules dist .turbo .next",
     "db:generate": "node database/node_modules/prisma/build/index.js generate --schema=database/prisma/schema.prisma",

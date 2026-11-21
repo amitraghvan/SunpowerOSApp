@@ -1,12 +1,11 @@
-import { Module } from '@nestjs/common';
+import { Module, Global } from '@nestjs/common';
+import { AccessControlService } from './access-control.service';
+import { AccessControlController } from './access-control.controller';
 
-/**
- * AccessControl Domain Module (Foundation)
- * Role-based access control (RBAC), permission definitions, and authorization guards
- */
+@Global()
 @Module({
-  controllers: [],
-  providers: [],
-  exports: [],
+  controllers: [AccessControlController],
+  providers: [AccessControlService],
+  exports: [AccessControlService],
 })
 export class AccessControlModule {}

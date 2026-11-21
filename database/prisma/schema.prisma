@@ -28,6 +28,42 @@ model Organization {
   sessions      Session[]
   auditLogs     AuditLog[]
   outboxEvents  OutboxEvent[]
+  leads         Lead[]
+  leadActivities LeadActivity[]
+  leadStatusHistories LeadStatusHistory[]
+  customers     Customer[]
+  customerContacts CustomerContact[]
+  customerAddresses CustomerAddress[]
+  customerSites CustomerSite[]
+  surveys       Survey[]
+  surveyRevisions SurveyRevision[]
+  surveyPhotos  SurveyPhoto[]
+  productCategories ProductCategory[]
+  manufacturers Manufacturer[]
+  products      Product[]
+  productVariants ProductVariant[]
+  productAttributeDefinitions ProductAttributeDefinition[]
+  productAttributeValues ProductAttributeValue[]
+  productPriceHistories ProductPriceHistory[]
+  invitations   OrganizationInvitation[]
+
+  // Phase 2: Engineering, BOM, Quotation, Contracts, Sales Orders
+  documentSequences           DocumentSequence[]
+  engineeringDesigns          EngineeringDesign[]
+  engineeringDesignRevisions  EngineeringDesignRevision[]
+  calculationRuns             CalculationRun[]
+  boms                        BillOfMaterials[]
+  bomItems                    BOMItem[]
+  taxConfigurations           TaxConfiguration[]
+  costEstimates               CostEstimate[]
+  quotations                  Quotation[]
+  quotationVersions           QuotationVersion[]
+  quotationItems              QuotationItem[]
+  contracts                   Contract[]
+  contractPaymentMilestones   ContractPaymentMilestone[]
+  salesOrders                 SalesOrder[]
+  salesOrderMilestones        SalesOrderMilestone[]
+  projectInitiations          ProjectInitiation[]
 
   @@map("organizations")
 }
@@ -48,6 +84,8 @@ model OrganizationBranch {
 
   organization   Organization             @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   memberships    OrganizationMembership[]
+  leads          Lead[]
+  invitations    OrganizationInvitation[]
 
   @@unique([organizationId, code])
   @@index([organizationId])
@@ -59,22 +97,52 @@ model OrganizationBranch {
 // -----------------------------------------------------------------------------
 
 model User {
-  id           String    @id @default(uuid())
-  email        String    @unique
-  passwordHash String?
-  firstName    String
-  lastName     String
-  phone        String?
-  isActive     Boolean   @default(true)
-  isSuperAdmin Boolean   @default(false)
-  lastLoginAt  DateTime?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  deletedAt    DateTime?
+  id                     String    @id @default(uuid())
+  email                  String    @unique
+  passwordHash           String?
+  firstName              String
+  lastName               String
+  phone                  String?
+  status                 String    @default("ACTIVE") // INVITED, PENDING_VERIFICATION, ACTIVE, SUSPENDED, ARCHIVED
+  twoFactorEnabled       Boolean   @default(false)
+  twoFactorSecret        String?
+  twoFactorRecoveryCodes String[]  @default([])
+  failedLoginAttempts    Int       @default(0)
+  lockedUntil            DateTime?
+  isActive               Boolean   @default(true)
+  isSuperAdmin           Boolean   @default(false)
+  lastLoginAt            DateTime?
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+  deletedAt              DateTime?
 
-  memberships  OrganizationMembership[]
-  sessions     Session[]
-  auditLogs    AuditLog[]
+  memberships            OrganizationMembership[]
+  sessions               Session[]
+  auditLogs              AuditLog[]
+  assignedLeads          Lead[]                   @relation("LeadAssignedTo")
+  leadActivities         LeadActivity[]
+  assignedSurveys        Survey[]                 @relation("SurveyTechnician")
+  surveyRevisions        SurveyRevision[]
+  surveyPhotos           SurveyPhoto[]
+  priceHistories         ProductPriceHistory[]
+  passwordResetTokens    PasswordResetToken[]
+  emailVerificationTokens EmailVerificationToken[]
+  sentInvitations        OrganizationInvitation[] @relation("InvitationSender")
+
+  // Phase 2 Relations
+  createdDesigns         EngineeringDesign[]         @relation("DesignCreatedBy")
+  approvedDesigns        EngineeringDesign[]         @relation("DesignApprovedBy")
+  createdDesignRevisions EngineeringDesignRevision[] @relation("RevisionCreatedBy")
+  calculationRuns        CalculationRun[]            @relation("CalculationRunExecutedBy")
+  createdBOMs            BillOfMaterials[]           @relation("BOMCreatedBy")
+  approvedBOMs           BillOfMaterials[]           @relation("BOMApprovedBy")
+  createdQuotations      Quotation[]                 @relation("QuotationCreatedBy")
+  approvedQuotations     Quotation[]                 @relation("QuotationApprovedBy")
+  createdQuotationVersions QuotationVersion[]        @relation("QuotationVersionCreatedBy")
+  createdContracts       Contract[]                  @relation("ContractCreatedBy")
+  createdSalesOrders     SalesOrder[]                @relation("SalesOrderCreatedBy")
+  confirmedSalesOrders   SalesOrder[]                @relation("SalesOrderConfirmedBy")
+  initiatedProjects      ProjectInitiation[]         @relation("ProjectInitiatedBy")
 
   @@map("users")
 }
@@ -112,6 +180,8 @@ model Role {
   name           String
   code           String
   description    String?
+  scope          String   @default("ORGANIZATION") // NONE, OWN, ASSIGNED, TEAM, BRANCH, ORGANIZATION
+  category       String   @default("BUSINESS") // SYSTEM, BUSINESS, CUSTOM
   isSystem       Boolean  @default(false)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -130,6 +200,9 @@ model Permission {
   code        String   @unique
   name        String
   category    String
+  action      String   @default("READ") // READ, CREATE, UPDATE, DELETE, APPROVE, REJECT, ASSIGN, EXPORT, MANAGE
+  resource    String   @default("all")
+  sensitivity String   @default("NORMAL") // NORMAL, SENSITIVE, CRITICAL
   description String?
   createdAt   DateTime @default(now())
 
@@ -137,6 +210,60 @@ model Permission {
 
   @@index([category])
   @@map("permissions")
+}
+
+model PasswordResetToken {
+  id        String    @id @default(uuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tokenHash])
+  @@map("password_reset_tokens")
+}
+
+model EmailVerificationToken {
+  id        String    @id @default(uuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tokenHash])
+  @@map("email_verification_tokens")
+}
+
+model OrganizationInvitation {
+  id             String    @id @default(uuid())
+  organizationId String
+  email          String
+  roleCode       String    @default("SOLAR_ENGINEER")
+  branchId       String?
+  tokenHash      String    @unique
+  invitedById    String?
+  status         String    @default("PENDING") // PENDING, ACCEPTED, EXPIRED, REVOKED
+  expiresAt      DateTime
+  acceptedAt     DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  organization   Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  invitedBy      User?               @relation("InvitationSender", fields: [invitedById], references: [id], onDelete: SetNull)
+  branch         OrganizationBranch? @relation(fields: [branchId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([email])
+  @@index([tokenHash])
+  @@map("organization_invitations")
 }
 
 model MembershipRole {
@@ -266,4 +393,1093 @@ model IdempotencyRecord {
   @@index([organizationId])
   @@index([expiresAt])
   @@map("idempotency_records")
+}
+
+// =============================================================================
+// PHASE 1: CRM & LEAD MANAGEMENT
+// =============================================================================
+
+model Lead {
+  id                    String              @id @default(uuid())
+  organizationId        String
+  branchId              String?
+  leadNumber            String
+  firstName             String
+  lastName              String
+  email                 String?
+  phone                 String
+  alternatePhone        String?
+  address               String?
+  city                  String
+  state                 String
+  postalCode            String?
+  source                String              @default("WEBSITE") // WEBSITE, REFERRAL, COLD_CALL, CAMPAIGN, WALK_IN, OTHER
+  status                String              @default("NEW")     // NEW, CONTACTED, QUALIFIED, SURVEY_PENDING, PROPOSAL_PENDING, NEGOTIATION, WON, LOST
+  systemType            String              @default("ON_GRID") // ON_GRID, OFF_GRID, HYBRID
+  estimatedMonthlyBill  Decimal?            @db.Decimal(12, 2)
+  estimatedRoofAreaSqFt Decimal?            @db.Decimal(10, 2)
+  estimatedCapacityKw   Decimal?            @db.Decimal(8, 2)
+  budget                Decimal?            @db.Decimal(12, 2)
+  score                 Int                 @default(50)
+  lostReason            String?
+  qualificationDetails  Json?
+  notes                 String?
+  assignedToId          String?
+  convertedCustomerId   String?             @unique
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+  deletedAt             DateTime?
+
+  organization          Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  branch                OrganizationBranch? @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  assignedTo            User?               @relation("LeadAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
+  convertedCustomer     Customer?           @relation("LeadConvertedCustomer", fields: [convertedCustomerId], references: [id], onDelete: SetNull)
+  activities            LeadActivity[]
+  statusHistory         LeadStatusHistory[]
+  surveys               Survey[]
+
+  @@unique([organizationId, leadNumber])
+  @@index([organizationId])
+  @@index([branchId])
+  @@index([assignedToId])
+  @@index([status])
+  @@index([phone])
+  @@index([email])
+  @@map("leads")
+}
+
+model LeadActivity {
+  id             String       @id @default(uuid())
+  organizationId String
+  leadId         String
+  userId         String?
+  type           String       // NOTE, CALL, EMAIL, MEETING, STATUS_CHANGE
+  summary        String
+  details        String?
+  scheduledAt    DateTime?
+  completedAt    DateTime?
+  createdAt      DateTime     @default(now())
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  lead           Lead         @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  user           User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([leadId])
+  @@index([userId])
+  @@map("lead_activities")
+}
+
+model LeadStatusHistory {
+  id             String       @id @default(uuid())
+  organizationId String
+  leadId         String
+  fromStatus     String
+  toStatus       String
+  changedById    String?
+  reason         String?
+  createdAt      DateTime     @default(now())
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  lead           Lead         @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([leadId])
+  @@map("lead_status_history")
+}
+
+// =============================================================================
+// PHASE 1: CUSTOMER MANAGEMENT & CUSTOMER 360
+// =============================================================================
+
+model Customer {
+  id             String            @id @default(uuid())
+  organizationId String
+  customerNumber String
+  customerType   String            @default("INDIVIDUAL") // INDIVIDUAL, COMMERCIAL, INSTITUTIONAL
+  name           String
+  email          String?
+  phone          String
+  alternatePhone String?
+  taxId          String?           // GSTIN / PAN / VAT
+  status         String            @default("ACTIVE")    // ACTIVE, INACTIVE, BLACKLISTED
+  notes          String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  deletedAt      DateTime?
+
+  organization   Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  convertedLead  Lead?             @relation("LeadConvertedCustomer")
+  contacts       CustomerContact[]
+  addresses      CustomerAddress[]
+  sites          CustomerSite[]
+  surveys        Survey[]
+
+  // Phase 2 Relations
+  engineeringDesigns EngineeringDesign[]
+  quotations         Quotation[]
+  contracts          Contract[]
+  salesOrders        SalesOrder[]
+  projectInitiations ProjectInitiation[]
+
+  @@unique([organizationId, customerNumber])
+  @@index([organizationId])
+  @@index([phone])
+  @@index([email])
+  @@index([status])
+  @@map("customers")
+}
+
+model CustomerContact {
+  id             String       @id @default(uuid())
+  organizationId String
+  customerId     String
+  name           String
+  designation    String?
+  email          String?
+  phone          String
+  isPrimary      Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customer       Customer     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([customerId])
+  @@map("customer_contacts")
+}
+
+model CustomerAddress {
+  id             String       @id @default(uuid())
+  organizationId String
+  customerId     String
+  type           String       @default("BILLING") // BILLING, SITE, COMMUNICATION
+  addressLine1   String
+  addressLine2   String?
+  landmark       String?
+  city           String
+  state          String
+  postalCode     String
+  country        String       @default("India")
+  latitude       Decimal?     @db.Decimal(10, 7)
+  longitude      Decimal?     @db.Decimal(10, 7)
+  isPrimary      Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customer       Customer     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([customerId])
+  @@map("customer_addresses")
+}
+
+model CustomerSite {
+  id                         String       @id @default(uuid())
+  organizationId             String
+  customerId                 String
+  siteName                   String
+  addressLine1               String
+  addressLine2               String?
+  landmark                   String?
+  city                       String
+  state                      String
+  postalCode                 String
+  latitude                   Decimal?     @db.Decimal(10, 7)
+  longitude                  Decimal?     @db.Decimal(10, 7)
+  electricityConnectionNumber String?
+  sanctionedLoadKw           Decimal?     @db.Decimal(8, 2)
+  tariffCategory             String?
+  discomName                 String?
+  transformerCapacityKva     Decimal?     @db.Decimal(8, 2)
+  meterNumber                String?
+  averageMonthlyUnits        Decimal?     @db.Decimal(10, 2)
+  roofAreaSqFt               Decimal?     @db.Decimal(10, 2)
+  roofType                   String?      // RCC_FLAT, METAL_SHEET, TILED, SHED, GROUND
+  buildingHeightFloors       Int?         @default(1)
+  shadowFreeAreaSqFt         Decimal?     @db.Decimal(10, 2)
+  notes                      String?
+  status                     String       @default("ACTIVE") // ACTIVE, INACTIVE
+  createdAt                  DateTime     @default(now())
+  updatedAt                  DateTime     @updatedAt
+
+  organization               Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customer                   Customer     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  surveys                    Survey[]
+
+  // Phase 2 Relations
+  engineeringDesigns         EngineeringDesign[]
+  quotations                 Quotation[]
+  projectInitiations         ProjectInitiation[]
+
+  @@index([organizationId])
+  @@index([customerId])
+  @@map("customer_sites")
+}
+
+// =============================================================================
+// PHASE 1: SITE SURVEY & ASSESSMENT
+// =============================================================================
+
+model Survey {
+  id                         String           @id @default(uuid())
+  organizationId             String
+  surveyNumber               String
+  customerId                 String
+  siteId                     String
+  leadId                     String?
+  assignedTechnicianId       String?
+  scheduledDate              DateTime?
+  completedDate              DateTime?
+  status                     String           @default("REQUESTED") // REQUESTED, SCHEDULED, IN_PROGRESS, COMPLETED, CANCELLED, APPROVED, REVISION_REQUESTED
+  rejectionReason            String?
+  currentRevisionNumber      Int              @default(1)
+
+  // Technical Assessment Data
+  roofType                   String?
+  roofAgeYears               Int?
+  roofPitchDegrees           Decimal?         @db.Decimal(5, 2)
+  roofAzimuthDegrees         Decimal?         @db.Decimal(5, 2)
+  roofCondition              String?          // EXCELLENT, GOOD, FAIR, POOR
+  usableAreaSqFt             Decimal?         @db.Decimal(10, 2)
+  shadowObstacles            String?          // PARAPET_WALL, TREES, WATER_TANK, NEIGHBOR_BUILDING, NONE, OTHER
+  recommendedCapacityKw      Decimal?         @db.Decimal(8, 2)
+
+  sanctionedLoadKw           Decimal?         @db.Decimal(8, 2)
+  currentVoltage             Decimal?         @db.Decimal(6, 2)
+  phaseType                  String?          @default("THREE_PHASE") // SINGLE_PHASE, THREE_PHASE
+  incomingCableCapacitySqMm  Decimal?         @db.Decimal(6, 2)
+  cableLengthMeters          Decimal?         @db.Decimal(8, 2)
+  earthingRequired           Boolean          @default(true)
+  earthResistanceOhms        Decimal?         @db.Decimal(6, 2)
+  lightningArresterRequired  Boolean          @default(true)
+  mainSwitchboardCondition   String?
+  inverterLocation           String?          @default("INDOOR") // INDOOR, OUTDOOR, ROOF_TOP, BASEMENT
+  distanceToMainPanelMeters  Decimal?         @db.Decimal(8, 2)
+
+  accessibilityNotes         String?
+  craneRequired              Boolean          @default(false)
+  ladderRequired             Boolean          @default(false)
+  storageAvailableOnSite     Boolean          @default(true)
+  canSupportStructure        Boolean          @default(true)
+  reinforcementRequired      Boolean          @default(false)
+  remarks                    String?
+
+  createdAt                  DateTime         @default(now())
+  updatedAt                  DateTime         @updatedAt
+
+  organization               Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customer                   Customer         @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  site                       CustomerSite     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  lead                       Lead?            @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  assignedTechnician         User?            @relation("SurveyTechnician", fields: [assignedTechnicianId], references: [id], onDelete: SetNull)
+  revisions                  SurveyRevision[]
+  photos                     SurveyPhoto[]
+
+  // Phase 2 Relations
+  engineeringDesigns         EngineeringDesign[]
+
+  @@unique([organizationId, surveyNumber])
+  @@index([organizationId])
+  @@index([customerId])
+  @@index([siteId])
+  @@index([assignedTechnicianId])
+  @@index([status])
+  @@map("surveys")
+}
+
+model SurveyRevision {
+  id             String       @id @default(uuid())
+  organizationId String
+  surveyId       String
+  revisionNumber Int
+  changesSummary String?
+  dataSnapshot   Json
+  createdById    String?
+  createdAt      DateTime     @default(now())
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  survey         Survey       @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  createdBy      User?        @relation(fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@unique([surveyId, revisionNumber])
+  @@index([organizationId])
+  @@index([surveyId])
+  @@map("survey_revisions")
+}
+
+model SurveyPhoto {
+  id               String       @id @default(uuid())
+  organizationId   String
+  surveyId         String
+  category         String       // ROOF, METER, MAIN_SWITCHBOARD, INVERTER_LOCATION, OBSTACLE, STRUCTURE, HAZARD, OTHER
+  objectKey        String
+  originalFileName String
+  mimeType         String
+  fileSize         Int
+  caption          String?
+  uploadedById     String?
+  createdAt        DateTime     @default(now())
+
+  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  survey           Survey       @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  uploadedBy       User?        @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([surveyId])
+  @@map("survey_photos")
+}
+
+// =============================================================================
+// PHASE 1: SOLAR PRODUCT CATALOG
+// =============================================================================
+
+model ProductCategory {
+  id             String                       @id @default(uuid())
+  organizationId String
+  code           String
+  name           String
+  description    String?
+  icon           String?
+  isActive       Boolean                      @default(true)
+  createdAt      DateTime                     @default(now())
+  updatedAt      DateTime                     @updatedAt
+
+  organization   Organization                 @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  products       Product[]
+  attributes     ProductAttributeDefinition[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId])
+  @@map("product_categories")
+}
+
+model Manufacturer {
+  id             String       @id @default(uuid())
+  organizationId String
+  code           String
+  name           String
+  country        String?
+  website        String?
+  supportEmail   String?
+  supportPhone   String?
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  products       Product[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId])
+  @@map("manufacturers")
+}
+
+model Product {
+  id              String                  @id @default(uuid())
+  organizationId  String
+  categoryId      String
+  manufacturerId  String
+  code            String
+  name            String
+  modelNumber     String
+  description     String?
+  type            String                  // PANEL, INVERTER, BATTERY, STRUCTURE, CABLE, ACCESSORY
+  warrantyYears   Int                     @default(5)
+  datasheetUrl    String?
+  isActive        Boolean                 @default(true)
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+
+  organization    Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  category        ProductCategory         @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  manufacturer    Manufacturer            @relation(fields: [manufacturerId], references: [id], onDelete: Restrict)
+  variants        ProductVariant[]
+  attributeValues ProductAttributeValue[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId])
+  @@index([categoryId])
+  @@index([manufacturerId])
+  @@index([type])
+  @@map("products")
+}
+
+model ProductVariant {
+  id                 String                @id @default(uuid())
+  organizationId     String
+  productId          String
+  sku                String
+  name               String
+  ratedCapacityWatts Decimal?              @db.Decimal(10, 2)
+  systemVoltage      Decimal?              @db.Decimal(8, 2)
+  costPrice          Decimal               @db.Decimal(12, 2)
+  sellingPrice       Decimal               @db.Decimal(12, 2)
+  currency           String                @default("INR")
+  isDefault          Boolean               @default(false)
+  isActive           Boolean               @default(true)
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+
+  organization       Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  product            Product               @relation(fields: [productId], references: [id], onDelete: Cascade)
+  priceHistory       ProductPriceHistory[]
+
+  // Phase 2 Relations
+  designPanels       EngineeringDesignRevision[] @relation("DesignPanelVariant")
+  designInverters    EngineeringDesignRevision[] @relation("DesignInverterVariant")
+  designBatteries    EngineeringDesignRevision[] @relation("DesignBatteryVariant")
+  designStructures   EngineeringDesignRevision[] @relation("DesignStructureVariant")
+  bomItems           BOMItem[]
+
+  @@unique([organizationId, sku])
+  @@index([organizationId])
+  @@index([productId])
+  @@map("product_variants")
+}
+
+model ProductAttributeDefinition {
+  id             String                  @id @default(uuid())
+  organizationId String
+  categoryId     String
+  name           String
+  code           String
+  dataType       String                  // STRING, NUMBER, BOOLEAN, SELECT
+  unit           String?
+  isRequired     Boolean                 @default(false)
+  options        Json?
+  createdAt      DateTime                @default(now())
+
+  organization   Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  category       ProductCategory         @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  values         ProductAttributeValue[]
+
+  @@unique([organizationId, categoryId, code])
+  @@index([organizationId])
+  @@index([categoryId])
+  @@map("product_attribute_definitions")
+}
+
+model ProductAttributeValue {
+  id                    String                     @id @default(uuid())
+  organizationId        String
+  productId             String
+  attributeDefinitionId String
+  valueString           String?
+  valueNumber           Decimal?                   @db.Decimal(12, 4)
+  valueBoolean          Boolean?
+
+  organization          Organization               @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  product               Product                    @relation(fields: [productId], references: [id], onDelete: Cascade)
+  attributeDefinition   ProductAttributeDefinition @relation(fields: [attributeDefinitionId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, attributeDefinitionId])
+  @@index([organizationId])
+  @@index([productId])
+  @@index([attributeDefinitionId])
+  @@map("product_attribute_values")
+}
+
+model ProductPriceHistory {
+  id             String         @id @default(uuid())
+  organizationId String
+  variantId      String
+  costPrice      Decimal        @db.Decimal(12, 2)
+  sellingPrice   Decimal        @db.Decimal(12, 2)
+  effectiveFrom  DateTime       @default(now())
+  effectiveTo    DateTime?
+  changedById    String?
+  reason         String?
+  createdAt      DateTime       @default(now())
+
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  variant        ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  changedBy      User?          @relation(fields: [changedById], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([variantId])
+  @@map("product_price_history")
+}
+
+// =============================================================================
+// PHASE 2: DOCUMENT SEQUENCES & NUMBERING
+// =============================================================================
+
+model DocumentSequence {
+  id             String       @id @default(uuid())
+  organizationId String
+  entityType     String       // DESIGN, BOM, QUOTATION, CONTRACT, SALES_ORDER, PROJECT
+  prefix         String       // DES, BOM, QTN, CON, SO, PRJ
+  year           Int
+  lastNumber     Int          @default(0)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, entityType, prefix, year])
+  @@index([organizationId])
+  @@map("document_sequences")
+}
+
+// =============================================================================
+// PHASE 2: SOLAR ENGINEERING & DESIGN STANDARDS REGISTRY
+// =============================================================================
+
+model EngineeringStandard {
+  id                      String   @id @default(uuid())
+  code                    String   @unique
+  name                    String
+  issuingBody             String   // MNRE, BIS, CEA, IEC
+  category                String   // ELECTRICAL, MECHANICAL, SAFETY, GRID
+  version                 String
+  minDcAcRatio            Decimal? @db.Decimal(4, 2)
+  maxDcAcRatio            Decimal? @db.Decimal(4, 2)
+  maxDcVoltageSinglePhase Decimal? @db.Decimal(6, 2)
+  maxDcVoltageThreePhase  Decimal? @db.Decimal(6, 2)
+  voltageDropLimitPercent Decimal? @db.Decimal(4, 2)
+  specifications          Json?
+  isActive                Boolean  @default(true)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  @@map("engineering_standards")
+}
+
+// =============================================================================
+// PHASE 2: SOLAR ENGINEERING DESIGNS & REVISIONS
+// =============================================================================
+
+model EngineeringDesign {
+  id                   String                      @id @default(uuid())
+  organizationId       String
+  designNumber         String
+  customerId           String
+  siteId               String
+  surveyId             String
+  title                String
+  systemType           String                      @default("ON_GRID") // ON_GRID, OFF_GRID, HYBRID
+  connectionType       String                      @default("THREE_PHASE") // SINGLE_PHASE, THREE_PHASE
+  status               String                      @default("DRAFT") // DRAFT, CONFIGURING, CALCULATING, UNDER_REVIEW, APPROVED, REJECTED, SUPERSEDED
+  activeRevisionNumber Int                         @default(1)
+  sanctionedLoadKw     Decimal?                    @db.Decimal(8, 2)
+  targetCapacityKw     Decimal                     @db.Decimal(8, 2)
+  createdById          String?
+  approvedById         String?
+  approvedAt           DateTime?
+  rejectionReason      String?
+  createdAt            DateTime                    @default(now())
+  updatedAt            DateTime                    @updatedAt
+  deletedAt            DateTime?
+
+  organization         Organization                @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customer             Customer                    @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  site                 CustomerSite                @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  survey               Survey                      @relation(fields: [surveyId], references: [id], onDelete: Restrict)
+  createdBy            User?                       @relation("DesignCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  approvedBy           User?                       @relation("DesignApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+  revisions            EngineeringDesignRevision[]
+  calculationRuns      CalculationRun[]
+  boms                 BillOfMaterials[]
+  quotations           Quotation[]
+  salesOrders          SalesOrder[]
+
+  @@unique([organizationId, designNumber])
+  @@index([organizationId])
+  @@index([customerId])
+  @@index([siteId])
+  @@index([surveyId])
+  @@index([status])
+  @@map("engineering_designs")
+}
+
+model EngineeringDesignRevision {
+  id                       String            @id @default(uuid())
+  organizationId           String
+  designId                 String
+  revisionNumber           Int
+  status                   String            @default("DRAFT") // DRAFT, SUBMITTED, APPROVED, REJECTED
+
+  // Hardware selections
+  panelVariantId           String?
+  moduleQuantity           Int               @default(0)
+  moduleRatedPowerWatts    Decimal?          @db.Decimal(8, 2)
+  totalDcCapacityKw        Decimal           @default(0) @db.Decimal(8, 2)
+
+  inverterVariantId        String?
+  inverterQuantity         Int               @default(1)
+  inverterRatedPowerKw     Decimal?          @db.Decimal(8, 2)
+  totalAcCapacityKw        Decimal           @default(0) @db.Decimal(8, 2)
+
+  batteryVariantId         String?
+  batteryQuantity          Int?              @default(0)
+  batteryCapacityKwh       Decimal?          @db.Decimal(8, 2)
+  backupDurationHours      Decimal?          @db.Decimal(5, 2)
+  batterySystemVoltage     Decimal?          @db.Decimal(6, 2)
+
+  structureVariantId       String?
+  tiltDegrees              Decimal?          @db.Decimal(5, 2)
+  azimuthDegrees           Decimal?          @db.Decimal(5, 2)
+  groundClearanceMeters    Decimal?          @db.Decimal(5, 2)
+
+  // Array topology
+  stringCount              Int               @default(1)
+  modulesPerString         Int               @default(1)
+  mpptCount                Int               @default(1)
+  mpptAllocations          Json?
+
+  // Calculations snapshot
+  dcAcRatio                Decimal?          @db.Decimal(5, 3)
+  estDailyGenerationKwh    Decimal?          @db.Decimal(8, 2)
+  estAnnualGenerationKwh   Decimal?          @db.Decimal(10, 2)
+  specificYieldKwhPerKwp   Decimal?          @db.Decimal(8, 2)
+  performanceRatioPercent  Decimal?          @db.Decimal(5, 2)
+  co2SavedTonsAnnual       Decimal?          @db.Decimal(6, 2)
+
+  // Electrical sizing snapshot
+  dcCableSizeSqMm          Decimal?          @db.Decimal(6, 2)
+  acCableSizeSqMm          Decimal?          @db.Decimal(6, 2)
+  dcDropPercent            Decimal?          @db.Decimal(4, 2)
+  acDropPercent            Decimal?          @db.Decimal(4, 2)
+  mainMcbRatingAmps        Decimal?          @db.Decimal(6, 2)
+  spdRating                String?
+  fuseRatingAmps           Decimal?          @db.Decimal(6, 2)
+  earthingRodCount         Int?              @default(2)
+
+  // Compliance & validation
+  compatibilityStatus      String            @default("CONDITIONAL") // COMPATIBLE, INCOMPATIBLE, CONDITIONAL
+  complianceStatus         String            @default("PASSED") // PASSED, WARNING, FAILED
+  validationReport         Json?
+  bomGenerated             Boolean           @default(false)
+
+  createdById              String?
+  createdAt                DateTime          @default(now())
+  updatedAt                DateTime          @updatedAt
+
+  organization             Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  design                   EngineeringDesign @relation(fields: [designId], references: [id], onDelete: Cascade)
+  panelVariant             ProductVariant?   @relation("DesignPanelVariant", fields: [panelVariantId], references: [id], onDelete: SetNull)
+  inverterVariant          ProductVariant?   @relation("DesignInverterVariant", fields: [inverterVariantId], references: [id], onDelete: SetNull)
+  batteryVariant           ProductVariant?   @relation("DesignBatteryVariant", fields: [batteryVariantId], references: [id], onDelete: SetNull)
+  structureVariant         ProductVariant?   @relation("DesignStructureVariant", fields: [structureVariantId], references: [id], onDelete: SetNull)
+  createdBy                User?             @relation("RevisionCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@unique([designId, revisionNumber])
+  @@index([organizationId])
+  @@index([designId])
+  @@map("engineering_design_revisions")
+}
+
+model CalculationRun {
+  id              String            @id @default(uuid())
+  organizationId  String
+  designId        String
+  revisionNumber  Int
+  engineVersion   String            @default("2.0.0")
+  rulesetVersion  String            @default("MNRE_CEA_2026")
+  inputSnapshot   Json
+  outputSnapshot  Json
+  warnings        Json?
+  violations      Json?
+  passed          Boolean           @default(true)
+  executionTimeMs Int               @default(0)
+  executedById    String?
+  createdAt       DateTime          @default(now())
+
+  organization    Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  design          EngineeringDesign @relation(fields: [designId], references: [id], onDelete: Cascade)
+  executedBy      User?             @relation("CalculationRunExecutedBy", fields: [executedById], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([designId])
+  @@map("calculation_runs")
+}
+
+// =============================================================================
+// PHASE 2: BILL OF MATERIALS (BOM)
+// =============================================================================
+
+model BillOfMaterials {
+  id                String            @id @default(uuid())
+  organizationId    String
+  bomNumber         String
+  designId          String
+  revisionNumber    Int
+  version           Int               @default(1)
+  status            String            @default("DRAFT") // DRAFT, UNDER_REVIEW, APPROVED, REJECTED, FROZEN
+  totalMaterialCost Decimal           @default(0) @db.Decimal(12, 2)
+  currency          String            @default("INR")
+  notes             String?
+  createdById       String?
+  approvedById      String?
+  approvedAt        DateTime?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  organization      Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  design            EngineeringDesign @relation(fields: [designId], references: [id], onDelete: Cascade)
+  createdBy         User?             @relation("BOMCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  approvedBy        User?             @relation("BOMApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+  items             BOMItem[]
+  costEstimates     CostEstimate[]
+  quotations        Quotation[]
+  salesOrders       SalesOrder[]
+
+  @@unique([organizationId, bomNumber])
+  @@index([organizationId])
+  @@index([designId])
+  @@index([status])
+  @@map("bills_of_materials")
+}
+
+model BOMItem {
+  id                      String          @id @default(uuid())
+  organizationId          String
+  bomId                   String
+  category                String          // SOLAR_GENERATION, POWER_CONVERSION, STORAGE, MOUNTING, ELECTRICAL_BOS, SERVICES
+  variantId               String?
+  itemCode                String
+  description             String
+  quantity                Decimal         @db.Decimal(10, 2)
+  uom                     String          @default("NOS") // NOS, METERS, SET, LOT, HOURS
+  wastageAllowancePercent Decimal         @default(0) @db.Decimal(5, 2)
+  effectiveQuantity       Decimal         @db.Decimal(10, 2)
+  unitCost                Decimal         @db.Decimal(12, 2)
+  totalCost               Decimal         @db.Decimal(12, 2)
+  isOptional              Boolean         @default(false)
+  specifications          Json?
+  createdAt               DateTime        @default(now())
+  updatedAt               DateTime        @updatedAt
+
+  organization            Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  bom                     BillOfMaterials @relation(fields: [bomId], references: [id], onDelete: Cascade)
+  variant                 ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([bomId])
+  @@index([category])
+  @@map("bom_items")
+}
+
+// =============================================================================
+// PHASE 2: TAX CONFIGURATION & COMMERCIAL COST ESTIMATES
+// =============================================================================
+
+model TaxConfiguration {
+  id                       String       @id @default(uuid())
+  organizationId           String
+  stateCode                String       // MH, DL, KA, etc. or ALL
+  solarEquipmentGstPercent Decimal      @default(12.0) @db.Decimal(5, 2)
+  servicesGstPercent       Decimal      @default(18.0) @db.Decimal(5, 2)
+  isDefault                Boolean      @default(true)
+  createdAt                DateTime     @default(now())
+  updatedAt                DateTime     @updatedAt
+
+  organization             Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, stateCode])
+  @@index([organizationId])
+  @@map("tax_configurations")
+}
+
+model CostEstimate {
+  id                      String           @id @default(uuid())
+  organizationId          String
+  quotationId             String?          @unique
+  bomId                   String?
+  materialCost            Decimal          @default(0) @db.Decimal(12, 2)
+  laborCost               Decimal          @default(0) @db.Decimal(12, 2)
+  transportCost           Decimal          @default(0) @db.Decimal(12, 2)
+  engineeringServicesCost Decimal          @default(0) @db.Decimal(12, 2)
+  statutoryFees           Decimal          @default(0) @db.Decimal(12, 2)
+  subtotalCost            Decimal          @default(0) @db.Decimal(12, 2)
+  overheadMarginPercent   Decimal          @default(5.0) @db.Decimal(5, 2)
+  profitMarginPercent     Decimal          @default(15.0) @db.Decimal(5, 2)
+  baseSellingPrice        Decimal          @default(0) @db.Decimal(12, 2)
+  discountPercent         Decimal          @default(0) @db.Decimal(5, 2)
+  discountAmount          Decimal          @default(0) @db.Decimal(12, 2)
+  finalSellingPrice       Decimal          @default(0) @db.Decimal(12, 2)
+  isSubsidyEligible       Boolean          @default(true)
+  estSubsidyAmount        Decimal          @default(0) @db.Decimal(12, 2)
+  netPayableByCustomer    Decimal          @default(0) @db.Decimal(12, 2)
+  createdAt               DateTime         @default(now())
+  updatedAt               DateTime         @updatedAt
+
+  organization            Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  quotation               Quotation?       @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  bom                     BillOfMaterials? @relation(fields: [bomId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([bomId])
+  @@map("cost_estimates")
+}
+
+// =============================================================================
+// PHASE 2: QUOTATIONS & PROPOSALS
+// =============================================================================
+
+model Quotation {
+  id                    String             @id @default(uuid())
+  organizationId        String
+  quotationNumber       String
+  customerId            String
+  siteId                String
+  designId              String
+  bomId                 String
+  activeVersionNumber   Int                @default(1)
+  status                String             @default("DRAFT") // DRAFT, UNDER_REVIEW, APPROVED, SENT_TO_CUSTOMER, ACCEPTED, REJECTED, EXPIRED, SUPERSEDED
+  totalAmount           Decimal            @default(0) @db.Decimal(12, 2)
+  taxAmount             Decimal            @default(0) @db.Decimal(12, 2)
+  grandTotal            Decimal            @default(0) @db.Decimal(12, 2)
+  subsidyAmount         Decimal            @default(0) @db.Decimal(12, 2)
+  netCustomerPayable    Decimal            @default(0) @db.Decimal(12, 2)
+  validUntil            DateTime
+  scopeOfWork           String
+  paymentTerms          Json
+  warrantyTerms         String?
+  acceptanceDate        DateTime?
+  acceptanceMethod      String?            // DIGITAL_SIGNATURE, EMAIL_CONFIRMATION, PHYSICAL_COPY, VERBAL_CONFIRMED
+  acceptanceEvidenceUrl String?
+  acceptedById          String?
+  createdById           String?
+  approvedById          String?
+  approvedAt            DateTime?
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+  deletedAt             DateTime?
+
+  organization          Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customer              Customer           @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  site                  CustomerSite       @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  design                EngineeringDesign  @relation(fields: [designId], references: [id], onDelete: Restrict)
+  bom                   BillOfMaterials    @relation(fields: [bomId], references: [id], onDelete: Restrict)
+  createdBy             User?              @relation("QuotationCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  approvedBy            User?              @relation("QuotationApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+  versions              QuotationVersion[]
+  items                 QuotationItem[]
+  costEstimate          CostEstimate?
+  contracts             Contract[]
+  salesOrders           SalesOrder[]
+
+  @@unique([organizationId, quotationNumber])
+  @@index([organizationId])
+  @@index([customerId])
+  @@index([siteId])
+  @@index([designId])
+  @@index([bomId])
+  @@index([status])
+  @@map("quotations")
+}
+
+model QuotationVersion {
+  id                String       @id @default(uuid())
+  organizationId    String
+  quotationId       String
+  versionNumber     Int
+  totalAmount       Decimal      @db.Decimal(12, 2)
+  taxAmount         Decimal      @db.Decimal(12, 2)
+  grandTotal        Decimal      @db.Decimal(12, 2)
+  snapshotData      Json
+  reasonForRevision String?
+  createdById       String?
+  createdAt         DateTime     @default(now())
+
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  quotation         Quotation    @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  createdBy         User?        @relation("QuotationVersionCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@unique([quotationId, versionNumber])
+  @@index([organizationId])
+  @@index([quotationId])
+  @@map("quotation_versions")
+}
+
+model QuotationItem {
+  id             String       @id @default(uuid())
+  organizationId String
+  quotationId    String
+  itemCategory   String       // EQUIPMENT, INSTALLATION, ENGINEERING, STATUTORY_LIAISON, BOS
+  description    String
+  quantity       Decimal      @db.Decimal(10, 2)
+  uom            String       @default("NOS")
+  unitPrice      Decimal      @db.Decimal(12, 2)
+  discountAmount Decimal      @default(0) @db.Decimal(12, 2)
+  taxPercent     Decimal      @default(13.8) @db.Decimal(5, 2)
+  taxAmount      Decimal      @db.Decimal(12, 2)
+  totalAmount    Decimal      @db.Decimal(12, 2)
+  sortOrder      Int          @default(0)
+  createdAt      DateTime     @default(now())
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  quotation      Quotation    @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([quotationId])
+  @@map("quotation_items")
+}
+
+// =============================================================================
+// PHASE 2: CONTRACTS & PAYMENT MILESTONES
+// =============================================================================
+
+model Contract {
+  id                    String                    @id @default(uuid())
+  organizationId        String
+  contractNumber        String
+  customerId            String
+  quotationId           String
+  contractDate          DateTime                  @default(now())
+  systemCapacityKw      Decimal                   @db.Decimal(8, 2)
+  contractAmount        Decimal                   @db.Decimal(12, 2)
+  taxAmount             Decimal                   @db.Decimal(12, 2)
+  totalContractValue    Decimal                   @db.Decimal(12, 2)
+  paymentScheduleType   String                    @default("MILESTONE_BASED") // MILESTONE_BASED, ADVANCE_FULL, CUSTOM
+  status                String                    @default("DRAFT") // DRAFT, PENDING_SIGNATURE, ACTIVE, COMPLETED, TERMINATED
+  termsAndConditions    String
+  signedByCustomerName  String?
+  signedDate            DateTime?
+  contractDocumentUrl   String?
+  createdById           String?
+  createdAt             DateTime                  @default(now())
+  updatedAt             DateTime                  @updatedAt
+
+  organization          Organization              @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customer              Customer                  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  quotation             Quotation                 @relation(fields: [quotationId], references: [id], onDelete: Restrict)
+  createdBy             User?                     @relation("ContractCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  milestones            ContractPaymentMilestone[]
+  salesOrders           SalesOrder[]
+
+  @@unique([organizationId, contractNumber])
+  @@index([organizationId])
+  @@index([customerId])
+  @@index([quotationId])
+  @@index([status])
+  @@map("contracts")
+}
+
+model ContractPaymentMilestone {
+  id             String       @id @default(uuid())
+  organizationId String
+  contractId     String
+  milestoneType  String       // ADVANCE_BOOKING, MATERIAL_READINESS, DISPATCH, INSTALLATION_COMPLETE, COMMISSIONING_NET_METERING, FINAL_SUBSIDY
+  milestoneName  String
+  percentage     Decimal      @db.Decimal(5, 2)
+  amount         Decimal      @db.Decimal(12, 2)
+  status         String       @default("PENDING") // PENDING, INVOICED, PAID, WAIVED
+  dueDate        DateTime?
+  paidDate       DateTime?
+  paidAmount     Decimal      @default(0) @db.Decimal(12, 2)
+  referenceNote  String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  contract       Contract     @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([contractId])
+  @@map("contract_payment_milestones")
+}
+
+// =============================================================================
+// PHASE 2: SALES ORDERS & PROJECT INITIATION HANDOFF
+// =============================================================================
+
+model SalesOrder {
+  id               String                @id @default(uuid())
+  organizationId   String
+  orderNumber      String
+  customerId       String
+  contractId       String?
+  quotationId      String
+  designId         String
+  bomId            String
+  orderDate        DateTime              @default(now())
+  totalAmount      Decimal               @db.Decimal(12, 2)
+  advanceRequired  Decimal               @db.Decimal(12, 2)
+  advanceReceived  Decimal               @default(0) @db.Decimal(12, 2)
+  status           String                @default("DRAFT") // DRAFT, CONFIRMED, IN_EXECUTION, ON_HOLD, COMPLETED, CANCELLED
+  fulfillmentStatus String               @default("NOT_STARTED") // NOT_STARTED, PROCUREMENT, ALLOCATED, DISPATCHED, INSTALLED, COMMISSIONED
+  paymentStatus    String                @default("UNPAID") // UNPAID, PARTIALLY_PAID, PAID
+  prerequisitesMet Boolean               @default(false)
+  confirmedAt      DateTime?
+  confirmedById    String?
+  createdById      String?
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+
+  organization     Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customer         Customer              @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  contract         Contract?             @relation(fields: [contractId], references: [id], onDelete: SetNull)
+  quotation        Quotation             @relation(fields: [quotationId], references: [id], onDelete: Restrict)
+  design           EngineeringDesign     @relation(fields: [designId], references: [id], onDelete: Restrict)
+  bom              BillOfMaterials       @relation(fields: [bomId], references: [id], onDelete: Restrict)
+  createdBy        User?                 @relation("SalesOrderCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  confirmedBy      User?                 @relation("SalesOrderConfirmedBy", fields: [confirmedById], references: [id], onDelete: SetNull)
+  milestones       SalesOrderMilestone[]
+  projectInitiation ProjectInitiation?
+
+  @@unique([organizationId, orderNumber])
+  @@index([organizationId])
+  @@index([customerId])
+  @@index([contractId])
+  @@index([quotationId])
+  @@index([designId])
+  @@index([bomId])
+  @@index([status])
+  @@map("sales_orders")
+}
+
+model SalesOrderMilestone {
+  id             String       @id @default(uuid())
+  organizationId String
+  salesOrderId   String
+  milestoneType  String
+  name           String
+  percentage     Decimal      @db.Decimal(5, 2)
+  amount         Decimal      @db.Decimal(12, 2)
+  isPaid         Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  salesOrder     SalesOrder   @relation(fields: [salesOrderId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([salesOrderId])
+  @@map("sales_order_milestones")
+}
+
+model ProjectInitiation {
+  id                String            @id @default(uuid())
+  organizationId    String
+  salesOrderId      String            @unique
+  projectCode       String
+  projectName       String
+  customerId        String
+  siteId            String
+  systemCapacityKw  Decimal           @db.Decimal(8, 2)
+  systemType        String            @default("ON_GRID")
+  bomSnapshot       Json
+  designSnapshot    Json
+  handoverStatus    String            @default("READY_FOR_PROCUREMENT") // READY_FOR_PROCUREMENT, PROCUREMENT_PENDING, HANDED_OVER
+  handedOverAt      DateTime          @default(now())
+  initiatedById     String
+  createdAt         DateTime          @default(now())
+
+  organization      Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  salesOrder        SalesOrder        @relation(fields: [salesOrderId], references: [id], onDelete: Cascade)
+  customer          Customer          @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  site              CustomerSite      @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  initiatedBy       User              @relation("ProjectInitiatedBy", fields: [initiatedById], references: [id], onDelete: Restrict)
+
+  @@unique([organizationId, projectCode])
+  @@index([organizationId])
+  @@index([salesOrderId])
+  @@index([customerId])
+  @@index([siteId])
+  @@map("project_initiations")
 }

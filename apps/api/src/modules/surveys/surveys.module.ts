@@ -1,12 +1,10 @@
 import { Module } from '@nestjs/common';
+import { SurveysService } from './surveys.service';
+import { SurveysController } from './surveys.controller';
 
-/**
- * Surveys Domain Module (Commercial)
- * Site survey requests, technician roof measurements, shading analysis, and photos
- */
 @Module({
-  controllers: [],
-  providers: [],
-  exports: [],
+  controllers: [SurveysController],
+  providers: [SurveysService],
+  exports: [SurveysService],
 })
 export class SurveysModule {}

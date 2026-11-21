@@ -1,9 +1,37 @@
-import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { Injectable, OnModuleInit, OnModuleDestroy, Logger, Optional } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { PrismaClient, Prisma } from '@prisma/client';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PrismaService.name);
+
+  constructor(@Optional() configOrOptions?: any) {
+    let dbUrl: string | undefined;
+
+    if (configOrOptions && typeof configOrOptions.get === 'function') {
+      dbUrl = configOrOptions.get('DATABASE_URL');
+    } else if (configOrOptions && configOrOptions.datasources?.db?.url) {
+      dbUrl = configOrOptions.datasources.db.url;
+    }
+
+    if (!dbUrl) {
+      dbUrl = process.env.DATABASE_URL ||
+        'postgresql://solaros_app:solaros_secret_app_pw@localhost:5432/solaros_dev?schema=public';
+    }
+
+    super(
+      configOrOptions && !configOrOptions.get
+        ? configOrOptions
+        : {
+            datasources: {
+              db: {
+                url: dbUrl,
+              },
+            },
+          }
+    );
+  }
 
   async onModuleInit() {
     try {
@@ -27,5 +55,27 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     } catch (err: any) {
       return { status: 'DOWN', message: err.message, latencyMs: Date.now() - start };
     }
+  }
+
+  /**
+   * Executes a callback within a database transaction scoped to a specific tenant context.
+   * Sets PostgreSQL session variable `app.current_organization_id` to enforce Row Level Security (RLS).
+   */
+  async forTenant<T>(tenantId: string, fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {
+    return this.$transaction(async (tx) => {
+      await tx.$executeRawUnsafe(`SET LOCAL app.current_organization_id = '${tenantId}'`);
+      return fn(tx);
+    });
+  }
+
+  /**
+   * Executes a callback within a database transaction scoped with super admin bypass.
+   * Sets PostgreSQL session variable `app.is_super_admin = 'true'`.
+   */
+  async asSuperAdmin<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {
+    return this.$transaction(async (tx) => {
+      await tx.$executeRawUnsafe(`SET LOCAL app.is_super_admin = 'true'`);
+      return fn(tx);
+    });
   }
 }
