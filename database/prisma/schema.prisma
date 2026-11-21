@@ -1,0 +1,269 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// -----------------------------------------------------------------------------
+// ORGANIZATIONS & MULTI-TENANCY
+// -----------------------------------------------------------------------------
+
+model Organization {
+  id            String   @id @default(uuid())
+  slug          String   @unique
+  name          String
+  legalName     String?
+  taxIdentifier String?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  deletedAt     DateTime?
+
+  branches      OrganizationBranch[]
+  memberships   OrganizationMembership[]
+  roles         Role[]
+  sessions      Session[]
+  auditLogs     AuditLog[]
+  outboxEvents  OutboxEvent[]
+
+  @@map("organizations")
+}
+
+model OrganizationBranch {
+  id             String   @id @default(uuid())
+  organizationId String
+  code           String
+  name           String
+  address        String?
+  city           String
+  state          String
+  postalCode     String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  deletedAt      DateTime?
+
+  organization   Organization             @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  memberships    OrganizationMembership[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId])
+  @@map("organization_branches")
+}
+
+// -----------------------------------------------------------------------------
+// IDENTITY & USERS
+// -----------------------------------------------------------------------------
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String?
+  firstName    String
+  lastName     String
+  phone        String?
+  isActive     Boolean   @default(true)
+  isSuperAdmin Boolean   @default(false)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+
+  memberships  OrganizationMembership[]
+  sessions     Session[]
+  auditLogs    AuditLog[]
+
+  @@map("users")
+}
+
+model OrganizationMembership {
+  id             String    @id @default(uuid())
+  organizationId String
+  userId         String
+  branchId       String?
+  isActive       Boolean   @default(true)
+  joinedAt       DateTime  @default(now())
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+
+  organization   Organization             @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  branch         OrganizationBranch?      @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  roles          MembershipRole[]
+
+  @@unique([organizationId, userId])
+  @@index([organizationId])
+  @@index([userId])
+  @@index([branchId])
+  @@map("organization_memberships")
+}
+
+// -----------------------------------------------------------------------------
+// RBAC: ROLES & PERMISSIONS
+// -----------------------------------------------------------------------------
+
+model Role {
+  id             String   @id @default(uuid())
+  organizationId String?  // NULL = Global System Role; Non-null = Tenant custom role
+  name           String
+  code           String
+  description    String?
+  isSystem       Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization   Organization?      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  memberships    MembershipRole[]
+  permissions    RolePermission[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId])
+  @@map("roles")
+}
+
+model Permission {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  name        String
+  category    String
+  description String?
+  createdAt   DateTime @default(now())
+
+  roles       RolePermission[]
+
+  @@index([category])
+  @@map("permissions")
+}
+
+model MembershipRole {
+  id           String   @id @default(uuid())
+  membershipId String
+  roleId       String
+  assignedAt   DateTime @default(now())
+
+  membership   OrganizationMembership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  role         Role                   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([membershipId, roleId])
+  @@index([membershipId])
+  @@index([roleId])
+  @@map("membership_roles")
+}
+
+model RolePermission {
+  id           String   @id @default(uuid())
+  roleId       String
+  permissionId String
+  grantedAt    DateTime @default(now())
+
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@index([roleId])
+  @@index([permissionId])
+  @@map("role_permissions")
+}
+
+// -----------------------------------------------------------------------------
+// SESSIONS & AUTHENTICATION
+// -----------------------------------------------------------------------------
+
+model Session {
+  id             String    @id @default(uuid())
+  userId         String
+  organizationId String
+  tokenHash      String    @unique
+  ipAddress      String?
+  userAgent      String?
+  expiresAt      DateTime
+  revokedAt      DateTime?
+  createdAt      DateTime  @default(now())
+
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([organizationId])
+  @@index([tokenHash])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+// -----------------------------------------------------------------------------
+// AUDIT LOGGING
+// -----------------------------------------------------------------------------
+
+model AuditLog {
+  id             String   @id @default(uuid())
+  organizationId String?
+  userId         String?
+  action         String
+  entityType     String
+  entityId       String?
+  metadata       Json?
+  ipAddress      String?
+  userAgent      String?
+  createdAt      DateTime @default(now())
+
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  user           User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// -----------------------------------------------------------------------------
+// TRANSACTIONAL OUTBOX PATTERN
+// -----------------------------------------------------------------------------
+
+model OutboxEvent {
+  id             String    @id @default(uuid())
+  organizationId String
+  eventType      String
+  aggregateType  String
+  aggregateId    String
+  payload        Json
+  status         String    @default("PENDING") // PENDING, PROCESSING, PUBLISHED, FAILED
+  retryCount     Int       @default(0)
+  scheduledFor   DateTime  @default(now())
+  processedAt    DateTime?
+  error          String?
+  createdAt      DateTime  @default(now())
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([status, scheduledFor])
+  @@index([organizationId])
+  @@index([eventType])
+  @@map("outbox_events")
+}
+
+// -----------------------------------------------------------------------------
+// IDEMPOTENCY RECORD
+// -----------------------------------------------------------------------------
+
+model IdempotencyRecord {
+  id             String   @id @default(uuid())
+  idempotencyKey String   @unique
+  organizationId String
+  userId         String?
+  endpoint       String
+  requestHash    String
+  responseCode   Int
+  responseBody   Json
+  expiresAt      DateTime
+  createdAt      DateTime @default(now())
+
+  @@index([idempotencyKey])
+  @@index([organizationId])
+  @@index([expiresAt])
+  @@map("idempotency_records")
+}

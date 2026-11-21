@@ -1,0 +1,75 @@
+import { NestFactory } from '@nestjs/core';
+import { ValidationPipe, Logger } from '@nestjs/common';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import helmet from 'helmet';
+import compression from 'compression';
+import { AppModule } from './app.module';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
+import { CorrelationIdMiddleware } from './common/middleware/correlation-id.middleware';
+import { API_CONSTANTS } from '@solaros/config';
+
+async function bootstrap() {
+  const logger = new Logger('SolarOS-Bootstrap');
+  const app = await NestFactory.create(AppModule);
+
+  // Security headers & compression
+  app.use(helmet());
+  app.use(compression());
+
+  // Global Correlation ID
+  app.use(new CorrelationIdMiddleware().use);
+
+  // CORS configuration
+  app.enableCors({
+    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', API_CONSTANTS.CORRELATION_ID_HEADER, API_CONSTANTS.TENANT_ID_HEADER, API_CONSTANTS.BRANCH_ID_HEADER],
+  });
+
+  // Global API Prefix
+  app.setGlobalPrefix(API_CONSTANTS.API_PREFIX);
+
+  // Global DTO Validation Pipe
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+      transformOptions: { enableImplicitConversion: true },
+    })
+  );
+
+  // Global Exception Filter & Logging
+  app.useGlobalFilters(new HttpExceptionFilter());
+  app.useGlobalInterceptors(new LoggingInterceptor());
+
+  // Swagger / OpenAPI documentation
+  if (process.env.ENABLE_SWAGGER !== 'false') {
+    const config = new DocumentBuilder()
+      .setTitle('SolarOS ERP API')
+      .setDescription('Enterprise Solar EPC SaaS & Operations Management API')
+      .setVersion('1.0')
+      .addTag('Health', 'System and dependency health status')
+      .addBearerAuth()
+      .addApiKey({ type: 'apiKey', name: API_CONSTANTS.TENANT_ID_HEADER, in: 'header' }, API_CONSTANTS.TENANT_ID_HEADER)
+      .build();
+
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('docs', app, document);
+    logger.log('Swagger documentation registered at /docs');
+  }
+
+  // Graceful shutdown hooks
+  app.enableShutdownHooks();
+
+  const port = process.env.PORT || API_CONSTANTS.DEFAULT_PORT;
+  await app.listen(port);
+  logger.log(`SolarOS API running on port ${port} with prefix /${API_CONSTANTS.API_PREFIX}`);
+}
+
+bootstrap().catch((err) => {
+  console.error('Fatal error during SolarOS API bootstrap:', err);
+  process.exit(1);
+});

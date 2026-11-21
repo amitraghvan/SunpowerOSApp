@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2022"],
+    "strict": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "baseUrl": ".",
+    "paths": {
+      "@solaros/types": ["packages/types/dist/index.d.ts", "packages/types/src/index.ts"],
+      "@solaros/contracts": ["packages/contracts/dist/index.d.ts", "packages/contracts/src/index.ts"],
+      "@solaros/config": ["packages/config/dist/index.d.ts", "packages/config/src/index.ts"],
+      "@solaros/ui": ["packages/ui/dist/index.d.ts", "packages/ui/src/index.ts"],
+      "@solaros/database": ["database/dist/index.d.ts", "database/src/index.ts"]
+    }
+  },
+  "exclude": ["node_modules", "dist", ".next"]
+}

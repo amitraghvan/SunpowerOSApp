@@ -1,0 +1,29 @@
+{
+  "name": "solaros",
+  "version": "0.1.0",
+  "private": true,
+  "description": "SolarOS ERP — Enterprise Solar EPC SaaS Platform",
+  "packageManager": "pnpm@9.15.4",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "build": "tsc -p packages/types/tsconfig.json && tsc -p packages/contracts/tsconfig.json && tsc -p packages/config/tsconfig.json && tsc -p packages/ui/tsconfig.json && tsc -p database/tsconfig.json && tsc -p apps/api/tsconfig.json && (cd apps/web && ./node_modules/.bin/next build)",
+    "dev": "turbo run dev",
+    "lint": "prettier --check \"**/*.{ts,tsx,js,json,md}\"",
+    "check-types": "tsc -p packages/types/tsconfig.json --noEmit && tsc -p packages/contracts/tsconfig.json --noEmit && tsc -p packages/config/tsconfig.json --noEmit && tsc -p packages/ui/tsconfig.json --noEmit && tsc -p database/tsconfig.json --noEmit && tsc -p apps/api/tsconfig.json --noEmit && tsc -p apps/web/tsconfig.json --noEmit",
+    "test": "node apps/api/node_modules/jest/bin/jest.js --config=jest.config.js",
+    "test:e2e": "playwright test",
+    "clean": "rm -rf node_modules dist .turbo .next",
+    "db:generate": "node database/node_modules/prisma/build/index.js generate --schema=database/prisma/schema.prisma",
+    "db:migrate": "node database/node_modules/prisma/build/index.js migrate dev --schema=database/prisma/schema.prisma",
+    "db:seed": "node -r ./database/node_modules/ts-node/register database/prisma/seeds/development/seed.ts",
+    "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,json,md}\""
+  },
+  "devDependencies": {
+    "prettier": "^3.4.2",
+    "turbo": "^2.3.3",
+    "typescript": "^5.7.2"
+  }
+}
