@@ -17,7 +17,18 @@ export type SequenceEntityType =
   | 'INSPECTION'
   | 'SERIAL'
   | 'MOVEMENT'
-  | 'SUPPLIER_RETURN';
+  | 'SUPPLIER_RETURN'
+  // Phase 4 Sequence Types
+  | 'WAREHOUSE'
+  | 'RESERVATION'
+  | 'TRANSFER'
+  | 'COUNT'
+  | 'ADJUSTMENT'
+  | 'PICKING'
+  | 'PACKING'
+  | 'DISPATCH'
+  | 'CHALLAN'
+  | 'CUSTOMER_RETURN';
 
 @Injectable()
 export class NumberingService {

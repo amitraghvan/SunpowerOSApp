@@ -949,4 +949,282 @@ export class ApiClient {
       body: JSON.stringify(data),
     });
   }
+
+  // ===========================================================================
+  // Phase 4: Warehouses, Stock, Reservations, Transfers, Dispatch & Returns
+  // ===========================================================================
+
+  // 1. Warehouses
+  static async getWarehouses(params?: Record<string, any>) {
+    const query = params ? `?${new URLSearchParams(params).toString()}` : '';
+    return this.request<any[]>(`/warehouses${query}`);
+  }
+
+  static async createWarehouse(data: any) {
+    return this.request<any>('/warehouses', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async getWarehouseById(id: string) {
+    return this.request<any>(`/warehouses/${id}`);
+  }
+
+  static async updateWarehouse(id: string, data: any) {
+    return this.request<any>(`/warehouses/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async createWarehouseLocation(warehouseId: string, data: any) {
+    return this.request<any>(`/warehouses/${warehouseId}/locations`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async getWarehouseLocations(warehouseId: string) {
+    return this.request<any[]>(`/warehouses/${warehouseId}/locations`);
+  }
+
+  // 2. Stock Visibility
+  static async getStockOverview(params?: Record<string, any>) {
+    const query = params ? `?${new URLSearchParams(params).toString()}` : '';
+    return this.request<any[]>(`/inventory/stock${query}`);
+  }
+
+  static async getProductStockDetails(productVariantId: string) {
+    return this.request<any>(`/inventory/stock/${productVariantId}`);
+  }
+
+  // 3. Stock Reservations
+  static async getStockReservations(params?: Record<string, any>) {
+    const query = params ? `?${new URLSearchParams(params).toString()}` : '';
+    return this.request<any>(`/inventory/reservations${query}`);
+  }
+
+  static async createStockReservation(data: any) {
+    return this.request<any>('/inventory/reservations', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async getStockReservationById(id: string) {
+    return this.request<any>(`/inventory/reservations/${id}`);
+  }
+
+  static async releaseStockReservation(id: string, data?: any) {
+    return this.request<any>(`/inventory/reservations/${id}/release`, {
+      method: 'POST',
+      body: JSON.stringify(data || {}),
+    });
+  }
+
+  // 4. Warehouse Transfers
+  static async getStockTransfers(params?: Record<string, any>) {
+    const query = params ? `?${new URLSearchParams(params).toString()}` : '';
+    return this.request<any>(`/inventory/transfers${query}`);
+  }
+
+  static async createStockTransfer(data: any) {
+    return this.request<any>('/inventory/transfers', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async getStockTransferById(id: string) {
+    return this.request<any>(`/inventory/transfers/${id}`);
+  }
+
+  static async approveStockTransfer(id: string) {
+    return this.request<any>(`/inventory/transfers/${id}/approve`, {
+      method: 'POST',
+    });
+  }
+
+  static async shipStockTransfer(id: string, data?: any) {
+    return this.request<any>(`/inventory/transfers/${id}/ship`, {
+      method: 'POST',
+      body: JSON.stringify(data || {}),
+    });
+  }
+
+  static async receiveStockTransfer(id: string, data?: any) {
+    return this.request<any>(`/inventory/transfers/${id}/receive`, {
+      method: 'POST',
+      body: JSON.stringify(data || {}),
+    });
+  }
+
+  // 5. Stock Counts & Adjustments
+  static async getStockCounts(params?: Record<string, any>) {
+    const query = params ? `?${new URLSearchParams(params).toString()}` : '';
+    return this.request<any[]>(`/inventory/counts${query}`);
+  }
+
+  static async createStockCount(data: any) {
+    return this.request<any>('/inventory/counts', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async submitStockCount(id: string, data: any) {
+    return this.request<any>(`/inventory/counts/${id}/submit`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async getStockAdjustments(params?: Record<string, any>) {
+    const query = params ? `?${new URLSearchParams(params).toString()}` : '';
+    return this.request<any[]>(`/inventory/adjustments${query}`);
+  }
+
+  static async createStockAdjustment(data: any) {
+    return this.request<any>('/inventory/adjustments', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async approveStockAdjustment(id: string, data?: any) {
+    return this.request<any>(`/inventory/adjustments/${id}/approve`, {
+      method: 'POST',
+      body: JSON.stringify(data || {}),
+    });
+  }
+
+  // 6. Picking & Packing
+  static async getPickingOrders(params?: Record<string, any>) {
+    const query = params ? `?${new URLSearchParams(params).toString()}` : '';
+    return this.request<any[]>(`/inventory/picking${query}`);
+  }
+
+  static async createPickingOrder(data: any) {
+    return this.request<any>('/inventory/picking', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async getPickingOrderById(id: string) {
+    return this.request<any>(`/inventory/picking/${id}`);
+  }
+
+  static async confirmPickingOrder(id: string, data: any) {
+    return this.request<any>(`/inventory/picking/${id}/confirm`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async getPackingOrders(params?: Record<string, any>) {
+    const query = params ? `?${new URLSearchParams(params).toString()}` : '';
+    return this.request<any[]>(`/inventory/packing${query}`);
+  }
+
+  static async createPackingOrder(data: any) {
+    return this.request<any>('/inventory/packing', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async getPackingOrderById(id: string) {
+    return this.request<any>(`/inventory/packing/${id}`);
+  }
+
+  static async confirmPackingOrder(id: string, data: any) {
+    return this.request<any>(`/inventory/packing/${id}/confirm`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // 7. Dispatch, Delivery Challan & POD
+  static async getDispatchOrders(params?: Record<string, any>) {
+    const query = params ? `?${new URLSearchParams(params).toString()}` : '';
+    return this.request<any[]>(`/dispatch${query}`);
+  }
+
+  static async createDispatchOrder(data: any) {
+    return this.request<any>('/dispatch', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async getDispatchOrderById(id: string) {
+    return this.request<any>(`/dispatch/${id}`);
+  }
+
+  static async approveDispatchOrder(id: string) {
+    return this.request<any>(`/dispatch/${id}/approve`, {
+      method: 'POST',
+    });
+  }
+
+  static async postDispatchOrder(id: string) {
+    return this.request<any>(`/dispatch/${id}/post`, {
+      method: 'POST',
+    });
+  }
+
+  static async confirmDispatchDelivery(id: string, data: any) {
+    return this.request<any>(`/dispatch/${id}/confirm-delivery`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async getDeliveryChallans(params?: Record<string, any>) {
+    const query = params ? `?${new URLSearchParams(params).toString()}` : '';
+    return this.request<any[]>(`/delivery-challans${query}`);
+  }
+
+  static async createDeliveryChallan(data: any) {
+    return this.request<any>('/delivery-challans', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async getDeliveryChallanById(id: string) {
+    return this.request<any>(`/delivery-challans/${id}`);
+  }
+
+  // 8. Customer Returns
+  static async getCustomerReturns(params?: Record<string, any>) {
+    const query = params ? `?${new URLSearchParams(params).toString()}` : '';
+    return this.request<any[]>(`/inventory/returns${query}`);
+  }
+
+  static async createCustomerReturn(data: any) {
+    return this.request<any>('/inventory/returns', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async getCustomerReturnById(id: string) {
+    return this.request<any>(`/inventory/returns/${id}`);
+  }
+
+  static async receiveCustomerReturn(id: string) {
+    return this.request<any>(`/inventory/returns/${id}/receive`, {
+      method: 'POST',
+    });
+  }
+
+  static async inspectCustomerReturn(id: string, data: any) {
+    return this.request<any>(`/inventory/returns/${id}/inspect`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
 }

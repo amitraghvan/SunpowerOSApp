@@ -27,7 +27,13 @@ import {
   ChevronsLeft,
   ChevronsRight,
   Layers,
-  Cpu
+  Cpu,
+  Warehouse,
+  PackageCheck,
+  ArrowLeftRight,
+  CheckSquare,
+  Scale,
+  RotateCcw
 } from 'lucide-react';
 
 interface SidebarItem {
@@ -81,6 +87,22 @@ const sidebarGroups: SidebarGroup[] = [
       { label: 'Purchase Orders', href: '/procurement/purchase-orders', icon: Truck },
       { label: 'Goods Receipts (GRN)', href: '/procurement/grns', icon: Boxes },
       { label: 'Serial Traceability', href: '/procurement/serials', icon: Key },
+    ],
+  },
+  {
+    id: 'inventory',
+    title: 'Inventory & Warehousing',
+    items: [
+      { label: 'Stock Cockpit', href: '/inventory', icon: Boxes },
+      { label: 'Warehouse Directory', href: '/inventory/warehouses', icon: Warehouse },
+      { label: 'Stock Visibility', href: '/inventory/stock', icon: Layers },
+      { label: 'Project Reservations', href: '/inventory/reservations', icon: Cpu },
+      { label: 'Warehouse Transfers', href: '/inventory/transfers', icon: ArrowLeftRight },
+      { label: 'Picking Operations', href: '/inventory/picking', icon: CheckSquare },
+      { label: 'Packing Workspace', href: '/inventory/packing', icon: PackageCheck },
+      { label: 'Outbound Dispatch & POD', href: '/inventory/dispatch', icon: Truck },
+      { label: 'Counts & Adjustments', href: '/inventory/adjustments', icon: Scale },
+      { label: 'Customer Returns', href: '/inventory/returns', icon: RotateCcw },
     ],
   },
   {

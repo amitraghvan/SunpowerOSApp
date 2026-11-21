@@ -15,3 +15,4 @@ export * from './sales-order';
 export * from './supplier';
 export * from './procurement';
 export * from './inbound';
+export * from './inventory';

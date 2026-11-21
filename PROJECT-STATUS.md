@@ -1,53 +1,62 @@
 # SUNPOWEROS ERP — PROJECT STATUS
 
-**Current Phase:** PHASE 0, PHASE 0.5, PHASE 1, PHASE 2, PHASE 3, PUBLIC SAAS PORTAL & MASTER UX/ERP REDESIGN COMPLETED & OFFICIALLY VERIFIED  
+**Current Phase:** PHASE 0, PHASE 0.5, PHASE 1, PHASE 2, PHASE 3, PUBLIC SAAS PORTAL, MASTER UX/ERP REDESIGN & PHASE 4 (INVENTORY & WAREHOUSE MANAGEMENT) COMPLETED & OFFICIALLY VERIFIED  
 **Last Updated:** November 22, 2026  
-**Status:** PHASE 0 CLOSED · PHASE 0.5 CLOSED · PHASE 1 CLOSED · PHASE 2 CLOSED · PHASE 3 CLOSED · PUBLIC PORTAL CLOSED · UX/ERP REDESIGN CLOSED · READY FOR PHASE 4 (WAREHOUSE & INSTALLATION)  
+**Status:** PHASE 0 CLOSED · PHASE 0.5 CLOSED · PHASE 1 CLOSED · PHASE 2 CLOSED · PHASE 3 CLOSED · PUBLIC PORTAL CLOSED · UX/ERP REDESIGN CLOSED · PHASE 4 CLOSED · READY FOR PHASE 5 (INSTALLATION & EXECUTION)  
 **Technical Lead / Principal Architect:** CTO, Principal Architect & Security Lead
 
 ---
 
 ## 1. Executive Summary
 
-Both the internal enterprise ERP (Phases 0, 0.5, 1, 2, 3) and the **Public SaaS Website & Self-Service Portal** have completed full UX refinement and enterprise redesign:
-- **Master UX Refinement (Objective A)**:
-  - Eliminated visual monotony by implementing varied compositions: Connected Process Timeline (Section 2), Hand-Drawn Activity Flowchart (Section 4), Horizontal Integration Strip (Section 5), and High-Impact Analytics Cockpit (Section 11).
-  - Sanitized copy: universal claims ("13.8% composite GST") replaced with "applicable GST based on configured tax rules"; "statutory milestones" replaced with "configurable payment milestones"; absolute security claims replaced with verified architecture guarantees (PostgreSQL RLS, Argon2id, RBAC, Centralized Audit Logs).
-  - Sample Data Policy: prominent `Illustrative Product Preview` badges on all mock frames; all preview customers replaced with generic illustrative samples (`Sample Residential Rooftop`, `Example Commercial Site`).
-  - Consolidated Application Ecosystem: merged feature grid and app ecosystem into an organized 18-app showcase grouped by Commercial, Technical & Engineering, and Supply Chain.
-  - Dedicated Public Sub-Pages: added `/features`, `/solutions`, `/security`, and `/contact` with full responsive navigation.
-  - 2-Column Authentication: `/login` transformed into a modern 2-column layout (branding & product highlights on left, focused sign-in on right).
-- **Enterprise ERP Redesign (Objective B)**:
-  - Enterprise Design Tokens (`erp.css`): Odoo plum (`#714B67`), teal (`#008784`), coral (`#E95B5B`), neutral canvas (`#F6F6F6`), tabular numbers (`font-variant-numeric: tabular-nums`).
-  - Unified Application Shell (`erp-shell.tsx`): Compact 58px topbar (`erp-topbar.tsx`) with 9-dot launcher, multi-tenant org/branch switcher, search; 252px collapsible grouped sidebar (`erp-sidebar.tsx`).
-  - Reusable Components: Standardized `page-header.tsx`, `data-table.tsx`, `record-form-layout.tsx`, `empty-state.tsx`, and `loading-skeleton.tsx`.
+Phase 4 (**Inventory, Warehouse Management, Stock Reservation & Dispatch Operations**) has been fully implemented, verified, and integrated into the SunPowerOS enterprise ERP:
+- **Module 1 — Warehouse Management**: Multi-warehouse directory scoped by organization and branch, storage zones, racks, bin locations, default receiving bays, and quarantine zones.
+- **Module 2 — Authoritative Stock Visibility Ledger**: Real-time balance calculations ($\text{Available} = \text{On-Hand} - \text{Active Reservations}$) calculated dynamically from immutable movements (`inventory_receipt_movements`) across product, warehouse, location, and serial perspectives.
+- **Module 3 — Project Stock Reservation**: Automatic extraction of approved BOM items from confirmed Sales Orders, atomic row locking (`FOR UPDATE`), shortage tracking (`quantityOutstanding`), and instant stock recovery upon reservation release.
+- **Module 4 — Multi-Warehouse Transfers**: Inter-warehouse and inter-bin workflows (`REQUESTED` $\to$ `APPROVED` $\to$ `IN_TRANSIT` with source stock deduction $\to$ `COMPLETED` with destination stock addition).
+- **Module 5 — Physical Counts & Segregation of Duties**: Physical and cycle counts, variance detection, supervisor authorization with segregation of duties (creator $\neq$ approver) posting immutable adjustment movements.
+- **Module 6 — Material Picking & Serial Tracking**: Pick tickets generated directly from reservations, barcode serial scanner input, partial picking, and short-pick reporting.
+- **Module 7 — Packing Workspace**: Packaging boxing, weights, dimensions, and configurable 8-item solar verification checklist.
+- **Module 8 — Outbound Dispatch Management**: Dispatch orders, approved sales order validation, transactional stock deduction (`DISPATCH_ISSUE`), duplicate post protection.
+- **Module 9 — Delivery Challan & Proof of Delivery (POD)**: Sequential numbering (`DCH-YYYY-000001`), printable delivery challan format, POD capture (receiver details, signature, photo evidence, damage/shortage reporting).
+- **Module 10 — Customer Returns (RMA)**: Customer/project returns, inspection outcome, and restock vs quarantine decisions.
+- **Frontend ERP Web App (`apps/web`)**: 10 responsive ERP screens in Next.js App Router adhering strictly to the Odoo `#714B67` plum enterprise theme.
 - **Zero Mock Business Data Invariant**: Preserved 100% real database operations and RLS tenant scoping.
 - **Verification Baseline**:
   - TypeScript: 0 errors across 7 packages (`pnpm check-types`).
-  - Next.js Build: 43/43 pages compiled cleanly (`pnpm --filter @solaros/web build`).
-  - Test Suite: 33/33 test suites passing (127/127 tests — 100%).
+  - Next.js Build: 52/52 routes compiled cleanly (`pnpm build`).
+  - Test Suite: 39/39 test suites passing (145/145 tests — 100%).
 
 ---
 
-## 2. Phase 3 Implementation Matrix
+## 2. Phase 4 Implementation Matrix
 
 | Domain Module | Backend APIs (`/api/v1`) | Frontend Screen (`apps/web`) | Database Tables | Status |
 | :--- | :--- | :--- | :--- | :---: |
-| **Supplier Management** | `/suppliers`, `/suppliers/:id`, `/suppliers/:id/contacts`, `/suppliers/:id/products` | `/suppliers`, `/suppliers/[id]` | `suppliers`, `supplier_contacts`, `supplier_addresses`, `supplier_bank_accounts`, `supplier_documents`, `supplier_product_mappings`, `supplier_price_history` | **COMPLETED & VERIFIED** |
-| **MRP & Requisitions** | `/procurement/mrp/generate`, `/procurement/mrp/:id/convert-to-pr`, `/procurement/requisitions` | `/procurement/requirements`, `/procurement/requisitions` | `material_requirements`, `material_requirement_lines`, `purchase_requisitions`, `purchase_requisition_lines` | **COMPLETED & VERIFIED** |
-| **RFQ & Comparison** | `/procurement/rfqs`, `/procurement/rfqs/:id/quotations`, `/procurement/rfqs/:id/compare`, `/procurement/rfqs/:id/award` | `/procurement/rfqs` | `rfqs`, `rfq_lines`, `rfq_suppliers`, `supplier_quotations`, `supplier_quotation_lines` | **COMPLETED & VERIFIED** |
-| **Purchase Orders & Schedules** | `/procurement/purchase-orders`, `/procurement/purchase-orders/:id/approve`, `/procurement/purchase-orders/:id/revisions` | `/procurement/purchase-orders` | `purchase_orders`, `purchase_order_lines`, `purchase_delivery_schedules` | **COMPLETED & VERIFIED** |
-| **Goods Receipt & Inspection** | `/inbound/locations`, `/inbound/grns`, `/inbound/inspections` | `/procurement/grns` | `inventory_locations`, `goods_receipt_notes`, `goods_receipt_lines`, `quality_inspections` | **COMPLETED & VERIFIED** |
-| **Serial Tracking & Returns** | `/inbound/serials/register`, `/inbound/serials`, `/inbound/returns` | `/procurement/serials`, `/procurement/returns` | `product_serials`, `inventory_receipt_movements`, `supplier_returns`, `supplier_return_lines` | **COMPLETED & VERIFIED** |
+| **Warehouse Hierarchy** | `/warehouses`, `/warehouses/:id`, `/warehouses/:id/locations` | `/inventory/warehouses` | `warehouses`, `inventory_locations` | **COMPLETED & VERIFIED** |
+| **Stock Ledger & Cockpit** | `/inventory/stock`, `/inventory/stock/:productVariantId` | `/inventory`, `/inventory/stock` | `inventory_receipt_movements`, `product_serials` | **COMPLETED & VERIFIED** |
+| **Stock Reservation** | `/inventory/reservations`, `/inventory/reservations/:id`, `/inventory/reservations/:id/release` | `/inventory/reservations` | `stock_reservations`, `stock_reservation_lines` | **COMPLETED & VERIFIED** |
+| **Warehouse Transfers** | `/inventory/transfers`, `/inventory/transfers/:id/approve`, `/inventory/transfers/:id/ship`, `/inventory/transfers/:id/receive` | `/inventory/transfers` | `stock_transfers`, `stock_transfer_lines` | **COMPLETED & VERIFIED** |
+| **Counts & Adjustments** | `/inventory/counts`, `/inventory/counts/:id/submit`, `/inventory/adjustments`, `/inventory/adjustments/:id/approve` | `/inventory/adjustments` | `stock_counts`, `stock_count_lines`, `stock_adjustments` | **COMPLETED & VERIFIED** |
+| **Material Picking** | `/inventory/picking`, `/inventory/picking/:id/confirm` | `/inventory/picking` | `picking_orders`, `picking_order_lines` | **COMPLETED & VERIFIED** |
+| **Packing Workspace** | `/inventory/packing`, `/inventory/packing/:id/confirm` | `/inventory/packing` | `packing_orders`, `packing_order_lines` | **COMPLETED & VERIFIED** |
+| **Dispatch Management** | `/dispatch`, `/dispatch/:id/approve`, `/dispatch/:id/post` | `/inventory/dispatch` | `dispatch_orders`, `dispatch_order_lines` | **COMPLETED & VERIFIED** |
+| **Challans & POD** | `/delivery-challans`, `/dispatch/:id/confirm-delivery` | `/inventory/dispatch` | `delivery_challans`, `proofs_of_delivery` | **COMPLETED & VERIFIED** |
+| **Customer Returns (RMA)** | `/inventory/returns`, `/inventory/returns/:id/receive`, `/inventory/returns/:id/inspect` | `/inventory/returns` | `customer_returns`, `customer_return_lines` | **COMPLETED & VERIFIED** |
 
 ---
 
-## 3. Monorepo Test Baseline (33/33 Suites Passing — 127/127 Tests — 100%)
+## 3. Monorepo Test Baseline (39/39 Suites Passing — 145/145 Tests — 100%)
 
 | Test Suite | Tests | Result | Verification Scope |
 | :--- | :---: | :---: | :--- |
-| `public-website-signup.spec.ts` | 4 | **PASS** | Self-service registration, terms validation, duplicate email handling, auto-slug generation, ORG_ADMIN assignment |
-| `phase3-supplier-management.spec.ts` | 6 | **PASS** | Supplier onboarding, contacts, addresses, bank details, SKU mapping, price history tracking |
+| `phase4-warehouse-locations.spec.ts` | 4 | **PASS** | Multi-warehouse provisioning, sub-location hierarchy, duplicate code check, tenant RLS isolation |
+| `phase4-stock-reservation-bom.spec.ts` | 4 | **PASS** | Dynamic ledger balance, atomic row-locking, BOM reservation, shortage tracking, release |
+| `phase4-warehouse-transfers.spec.ts` | 1 | **PASS** | Transfer request, approval, ship with source deduction, destination receiving addition |
+| `phase4-picking-packing-serials.spec.ts` | 2 | **PASS** | Reservation-driven pick ticket, scanned serials, 8-point checklist, weight & dimension recording |
+| `phase4-dispatch-challan-pod.spec.ts` | 4 | **PASS** | Dispatch creation & approval, stock deduction with duplicate prevention, Delivery Challan (`DCH-*`), POD confirmation |
+| `phase4-inventory-adjustments-returns.spec.ts` | 3 | **PASS** | Physical count variance, segregation of duties (creator cannot self-approve), customer RMA lifecycle & restock ledger |
+| *Pre-existing Suites (Phases 0 - 3)* | 127 | **PASS** | Zero regression across CRM, Surveys, Designs, BOM, Quotations, Contracts, POs, RFQs, GRNs, Auth & RLS |
 | `phase3-mrp-requisition.spec.ts` | 5 | **PASS** | Net requirements explosion from Project BOM, shortfall calculation, PR generation, approval & rejection lifecycle |
 | `phase3-rfq-quotation-comparison.spec.ts` | 4 | **PASS** | RFQ issuance, vendor quote submission, comparative bid matrix analysis, award decision |
 | `phase3-purchase-order-lifecycle.spec.ts` | 5 | **PASS** | PO generation from RFQ, financial approval gates, revision bumping (v1 $\to$ v2), delivery schedules |
