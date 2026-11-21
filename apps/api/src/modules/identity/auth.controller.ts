@@ -19,6 +19,7 @@ import { AuthenticationGuard } from '../../common/guards/authentication.guard';
 import { TenantContextGuard } from '../../common/guards/tenant-context.guard';
 import {
   LoginRequestDto,
+  RegisterRequestDto,
   ForgotPasswordRequestDto,
   ResetPasswordRequestDto,
 } from '@solaros/contracts';
@@ -42,6 +43,34 @@ export class AuthController {
     const userAgent = req.headers['user-agent'];
 
     const result = await this.authService.login(dto, ipAddress, userAgent);
+
+    // Set secure HttpOnly session cookie
+    if (result.sessionToken) {
+      res.cookie('solaros_session', result.sessionToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge: result.expiresIn * 1000,
+      });
+    }
+
+    return result;
+  }
+
+  @Public()
+  @Post('register')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Self-service registration for new workspace and organization owner' })
+  async register(
+    @Body() dto: RegisterRequestDto,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response
+  ) {
+    const ipAddress = req.ip || (req.headers['x-forwarded-for'] as string);
+    const userAgent = req.headers['user-agent'];
+
+    const result = await this.authService.register(dto, ipAddress, userAgent);
 
     // Set secure HttpOnly session cookie
     if (result.sessionToken) {

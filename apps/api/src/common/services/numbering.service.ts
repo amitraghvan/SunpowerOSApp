@@ -1,7 +1,23 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 
-export type SequenceEntityType = 'DESIGN' | 'BOM' | 'QUOTATION' | 'CONTRACT' | 'SALES_ORDER' | 'PROJECT';
+export type SequenceEntityType =
+  | 'DESIGN'
+  | 'BOM'
+  | 'QUOTATION'
+  | 'CONTRACT'
+  | 'SALES_ORDER'
+  | 'PROJECT'
+  | 'SUPPLIER'
+  | 'REQUISITION'
+  | 'RFQ'
+  | 'SUPPLIER_QUOTE'
+  | 'PURCHASE_ORDER'
+  | 'GRN'
+  | 'INSPECTION'
+  | 'SERIAL'
+  | 'MOVEMENT'
+  | 'SUPPLIER_RETURN';
 
 @Injectable()
 export class NumberingService {

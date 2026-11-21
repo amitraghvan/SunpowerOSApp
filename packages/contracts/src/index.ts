@@ -1,6 +1,6 @@
 export * from './error.contract';
-export * from './health.contract';
 export * from './pagination.contract';
+export * from './health.contract';
 export * from './auth.contract';
 export * from './crm.contract';
 export * from './customer.contract';
@@ -10,3 +10,6 @@ export * from './engineering.contract';
 export * from './quotation.contract';
 export * from './contract.contract';
 export * from './sales-order.contract';
+export * from './supplier.contract';
+export * from './procurement.contract';
+export * from './inbound.contract';

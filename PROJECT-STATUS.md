@@ -1,53 +1,59 @@
-# SOLAROS ERP — PROJECT STATUS
+# SUNPOWEROS ERP — PROJECT STATUS
 
-**Current Phase:** PHASE 0, PHASE 0.5, PHASE 1 & PHASE 2 COMPLETED & OFFICIALLY VERIFIED  
-**Last Updated:** November 21, 2026  
-**Status:** PHASE 0 CLOSED · PHASE 0.5 CLOSED · PHASE 1 CLOSED · PHASE 2 CLOSED · READY FOR PHASE 3 (PROCUREMENT & WAREHOUSE)  
+**Current Phase:** PHASE 0, PHASE 0.5, PHASE 1, PHASE 2, PHASE 3, PUBLIC SAAS PORTAL & MASTER UX/ERP REDESIGN COMPLETED & OFFICIALLY VERIFIED  
+**Last Updated:** November 22, 2026  
+**Status:** PHASE 0 CLOSED · PHASE 0.5 CLOSED · PHASE 1 CLOSED · PHASE 2 CLOSED · PHASE 3 CLOSED · PUBLIC PORTAL CLOSED · UX/ERP REDESIGN CLOSED · READY FOR PHASE 4 (WAREHOUSE & INSTALLATION)  
 **Technical Lead / Principal Architect:** CTO, Principal Architect & Security Lead
 
 ---
 
 ## 1. Executive Summary
 
-Phase 2 (**Solar Engineering, Technical Design, Calculation Engine, BOM, Quotation, Contract & Sales Order Management**) is fully implemented, verified, tested, and operational across both backend and frontend layers.
-
-The complete commercial and engineering chain is now operational:
-$$\text{CRM Won Lead} \to \text{Customer} \to \text{Customer Site} \to \text{Approved Survey} \to \text{Engineering Design} \to \text{Calculation Engine} \to \text{Compatibility Audit} \to \text{Automated BOM} \to \text{Quotation & Pricing} \to \text{Customer Acceptance} \to \text{Legal Contract} \to \text{Sales Order} \to \text{Project Initiation Handoff}$$
-
-### Key Technical Capabilities Built in Phase 2:
-1. **Concurrency-Safe Atomic Numbering**: `NumberingService` generates tenant-isolated, fiscal-year-scoped, collision-free codes: `DES-YYYY-XXXXXX`, `BOM-YYYY-XXXXXX`, `QTN-YYYY-XXXXXX`, `CON-YYYY-XXXXXX`, `SO-YYYY-XXXXXX`, `PRJ-YYYY-XXXXXX`.
-2. **Solar Technical Calculation Engine**: Real physics formulas adhering to IEC 62548, IS 16221, and MNRE rooftop standards for DC sizing, temperature-adjusted string bounds ($V_{oc,\text{cold}}$ and $V_{mp,\text{hot}}$), DC/AC ratio, battery Ah capacity at 48V, conductor cross-sections, voltage drop %, DC/AC protection switchgear, earthing pits, and energy yield with CO₂ avoidance.
-3. **Product Compatibility Engine**: 5-point electrical safety validation protecting inverters from overvoltage breakdown, dropout, overcurrent, and phase mismatch.
-4. **Automated BOM Engine**: Automatic compilation into 6 standard topology groups (`SOLAR_GENERATION`, `POWER_CONVERSION`, `STORAGE`, `MOUNTING`, `ELECTRICAL_BOS`, `SERVICES`) with frozen unit cost snapshots and realistic wastage allowances.
-5. **Costing & Indian Taxation Engine**: Transparent cost build-up (Direct Material, Labor, Logistics, Engineering, Statutory Fees, 5% Overheads, 15% Margin, Commercial Discount), 13.8% Composite Indian GST (70% Goods @ 12% + 30% Services @ 18%), and PM Surya Ghar: Muft Bijli Yojana Central Government subsidy tiers.
-6. **Commercial Quotations & Digital Acceptance**: Versioned quotations, approval gates, and multi-channel customer acceptance recording (`DIGITAL_SIGNATURE`, `SIGNED_PHYSICAL_COPY`, `OTP`, `EMAIL_CONFIRMATION`).
-7. **Legal EPC Contracts & Milestones**: Standard 4-milestone payment schedule (20% Advance, 40% Dispatch, 30% Installation, 10% Net Metering Commissioning), statutory equipment warranties (25-year panel performance, 5-year inverter), and customer signature capture.
-8. **Sales Orders & Downstream Project Initiation**: Strict 4-gate prerequisite enforcement (Approved Design, Approved BOM, Signed Contract, Advance Payment Cleared), order confirmation, and automated `project_initiations` generation (`PRJ-YYYY-XXXXXX`) handing over to Phase 3 (Procurement) and Phase 4 (Installation).
-9. **Odoo 19-Inspired Enterprise Frontend Experience**: 8 dedicated pages in `apps/web/src/app/(erp)/` (`/engineering`, `/engineering/[id]`, `/quotations`, `/quotations/[id]`, `/contracts`, `/contracts/[id]`, `/sales-orders`, `/sales-orders/[id]`), including a master 13-tab engineering technical workspace, quotation pricing cockpit, contract milestone management, and sales order prerequisite gates.
-10. **100% Automated Test Suite Verification**: 25 test suites (91 tests total) passing cleanly against live PostgreSQL 14, Redis, and MinIO without mock data.
+Both the internal enterprise ERP (Phases 0, 0.5, 1, 2, 3) and the **Public SaaS Website & Self-Service Portal** have completed full UX refinement and enterprise redesign:
+- **Master UX Refinement (Objective A)**:
+  - Eliminated visual monotony by implementing varied compositions: Connected Process Timeline (Section 2), Hand-Drawn Activity Flowchart (Section 4), Horizontal Integration Strip (Section 5), and High-Impact Analytics Cockpit (Section 11).
+  - Sanitized copy: universal claims ("13.8% composite GST") replaced with "applicable GST based on configured tax rules"; "statutory milestones" replaced with "configurable payment milestones"; absolute security claims replaced with verified architecture guarantees (PostgreSQL RLS, Argon2id, RBAC, Centralized Audit Logs).
+  - Sample Data Policy: prominent `Illustrative Product Preview` badges on all mock frames; all preview customers replaced with generic illustrative samples (`Sample Residential Rooftop`, `Example Commercial Site`).
+  - Consolidated Application Ecosystem: merged feature grid and app ecosystem into an organized 18-app showcase grouped by Commercial, Technical & Engineering, and Supply Chain.
+  - Dedicated Public Sub-Pages: added `/features`, `/solutions`, `/security`, and `/contact` with full responsive navigation.
+  - 2-Column Authentication: `/login` transformed into a modern 2-column layout (branding & product highlights on left, focused sign-in on right).
+- **Enterprise ERP Redesign (Objective B)**:
+  - Enterprise Design Tokens (`erp.css`): Odoo plum (`#714B67`), teal (`#008784`), coral (`#E95B5B`), neutral canvas (`#F6F6F6`), tabular numbers (`font-variant-numeric: tabular-nums`).
+  - Unified Application Shell (`erp-shell.tsx`): Compact 58px topbar (`erp-topbar.tsx`) with 9-dot launcher, multi-tenant org/branch switcher, search; 252px collapsible grouped sidebar (`erp-sidebar.tsx`).
+  - Reusable Components: Standardized `page-header.tsx`, `data-table.tsx`, `record-form-layout.tsx`, `empty-state.tsx`, and `loading-skeleton.tsx`.
+- **Zero Mock Business Data Invariant**: Preserved 100% real database operations and RLS tenant scoping.
+- **Verification Baseline**:
+  - TypeScript: 0 errors across 7 packages (`pnpm check-types`).
+  - Next.js Build: 43/43 pages compiled cleanly (`pnpm --filter @solaros/web build`).
+  - Test Suite: 33/33 test suites passing (127/127 tests — 100%).
 
 ---
 
-## 2. Phase 2 Implementation Matrix
+## 2. Phase 3 Implementation Matrix
 
 | Domain Module | Backend APIs (`/api/v1`) | Frontend Screen (`apps/web`) | Database Tables | Status |
 | :--- | :--- | :--- | :--- | :---: |
-| **Document Sequencing** | `NumberingService` | Embedded in all headers | `document_sequences` | **COMPLETED & VERIFIED** |
-| **Engineering Standards** | `standards-registry.ts`, `seed-standards.sql` | `/engineering/[id]` (Tab 10) | `engineering_standards` | **COMPLETED & VERIFIED** |
-| **Engineering Designs** | `/engineering/designs`, `/engineering/designs/:id`, `/engineering/designs/:id/revisions/:revNum/configure`, `/engineering/designs/:id/approve` | `/engineering`, `/engineering/[id]` | `engineering_designs`, `engineering_design_revisions` | **COMPLETED & VERIFIED** |
-| **Calculation Engine** | `/engineering/designs/:id/revisions/:revNum/calculate` | `/engineering/[id]` (Tabs 1-9, 12) | `calculation_runs` | **COMPLETED & VERIFIED** |
-| **Compatibility Engine** | Internal Service Validation | `/engineering/[id]` (Overview & Tabs) | Evaluated in `calculation_runs` | **COMPLETED & VERIFIED** |
-| **Automated BOM** | `/engineering/designs/:id/revisions/:revNum/generate-bom`, `/engineering/boms/:id`, `/engineering/boms/:id/approve` | `/engineering/[id]` (Tab 11) | `bills_of_materials`, `bom_items` | **COMPLETED & VERIFIED** |
-| **Quotations & Pricing** | `/quotations`, `/quotations/:id`, `/quotations/:id/approve`, `/quotations/:id/accept` | `/quotations`, `/quotations/[id]` | `quotations`, `quotation_versions`, `quotation_items`, `cost_estimates`, `tax_configurations` | **COMPLETED & VERIFIED** |
-| **Legal Contracts** | `/contracts`, `/contracts/:id`, `/contracts/:id/sign` | `/contracts`, `/contracts/[id]` | `contracts`, `contract_payment_milestones` | **COMPLETED & VERIFIED** |
-| **Sales Orders & Handoff** | `/sales-orders`, `/sales-orders/:id`, `/sales-orders/:id/advance-payment`, `/sales-orders/:id/confirm` | `/sales-orders`, `/sales-orders/[id]` | `sales_orders`, `sales_order_milestones`, `project_initiations` | **COMPLETED & VERIFIED** |
+| **Supplier Management** | `/suppliers`, `/suppliers/:id`, `/suppliers/:id/contacts`, `/suppliers/:id/products` | `/suppliers`, `/suppliers/[id]` | `suppliers`, `supplier_contacts`, `supplier_addresses`, `supplier_bank_accounts`, `supplier_documents`, `supplier_product_mappings`, `supplier_price_history` | **COMPLETED & VERIFIED** |
+| **MRP & Requisitions** | `/procurement/mrp/generate`, `/procurement/mrp/:id/convert-to-pr`, `/procurement/requisitions` | `/procurement/requirements`, `/procurement/requisitions` | `material_requirements`, `material_requirement_lines`, `purchase_requisitions`, `purchase_requisition_lines` | **COMPLETED & VERIFIED** |
+| **RFQ & Comparison** | `/procurement/rfqs`, `/procurement/rfqs/:id/quotations`, `/procurement/rfqs/:id/compare`, `/procurement/rfqs/:id/award` | `/procurement/rfqs` | `rfqs`, `rfq_lines`, `rfq_suppliers`, `supplier_quotations`, `supplier_quotation_lines` | **COMPLETED & VERIFIED** |
+| **Purchase Orders & Schedules** | `/procurement/purchase-orders`, `/procurement/purchase-orders/:id/approve`, `/procurement/purchase-orders/:id/revisions` | `/procurement/purchase-orders` | `purchase_orders`, `purchase_order_lines`, `purchase_delivery_schedules` | **COMPLETED & VERIFIED** |
+| **Goods Receipt & Inspection** | `/inbound/locations`, `/inbound/grns`, `/inbound/inspections` | `/procurement/grns` | `inventory_locations`, `goods_receipt_notes`, `goods_receipt_lines`, `quality_inspections` | **COMPLETED & VERIFIED** |
+| **Serial Tracking & Returns** | `/inbound/serials/register`, `/inbound/serials`, `/inbound/returns` | `/procurement/serials`, `/procurement/returns` | `product_serials`, `inventory_receipt_movements`, `supplier_returns`, `supplier_return_lines` | **COMPLETED & VERIFIED** |
 
 ---
 
-## 3. Monorepo Test Baseline (25/25 Suites Passing — 91/91 Tests — 100%)
+## 3. Monorepo Test Baseline (33/33 Suites Passing — 127/127 Tests — 100%)
 
 | Test Suite | Tests | Result | Verification Scope |
 | :--- | :---: | :---: | :--- |
+| `public-website-signup.spec.ts` | 4 | **PASS** | Self-service registration, terms validation, duplicate email handling, auto-slug generation, ORG_ADMIN assignment |
+| `phase3-supplier-management.spec.ts` | 6 | **PASS** | Supplier onboarding, contacts, addresses, bank details, SKU mapping, price history tracking |
+| `phase3-mrp-requisition.spec.ts` | 5 | **PASS** | Net requirements explosion from Project BOM, shortfall calculation, PR generation, approval & rejection lifecycle |
+| `phase3-rfq-quotation-comparison.spec.ts` | 4 | **PASS** | RFQ issuance, vendor quote submission, comparative bid matrix analysis, award decision |
+| `phase3-purchase-order-lifecycle.spec.ts` | 5 | **PASS** | PO generation from RFQ, financial approval gates, revision bumping (v1 $\to$ v2), delivery schedules |
+| `phase3-grn-inspection-serials.spec.ts` | 5 | **PASS** | Gate entry, GRN creation, electrical & flash test QA inspection, serial registration & barcode tracking |
+| `phase3-inventory-receipt-returns.spec.ts` | 3 | **PASS** | Inbound ledger movements, supplier returns for rejected goods, debit note generation |
+| `phase3-e2e-procurement-chain.spec.ts` | 4 | **PASS** | Complete 10-step procurement chain from Approved BOM to GRN, Serials, and Receiving Ledger |
 | `phase2-solar-calculations.spec.ts` | 6 | **PASS** | DC sizing, string temperature sizing, DC/AC ratio, conductor sizing, earthing, yield |
 | `phase2-compatibility-engine.spec.ts` | 4 | **PASS** | Voltage boundaries, MPPT limits, phase matching, battery pairing |
 | `phase2-pricing-costing.spec.ts` | 4 | **PASS** | BOM cost roll-up, 5% overheads, 15% margin, 13.8% composite GST, PM Surya Ghar subsidy |
@@ -76,9 +82,9 @@ $$\text{CRM Won Lead} \to \text{Customer} \to \text{Customer Site} \to \text{App
 
 ---
 
-## 4. Next Phase Roadmap: Phase 3 (Procurement, Supply Chain & Inventory Operations)
+## 4. Next Phase Roadmap: Phase 4 (Warehouse Inventory, Project Allocation & Dispatch)
 
-- **Automated Purchase Orders**: Convert approved BOM line items into vendor Purchase Orders (POs) mapped to solar module, inverter, and BOS suppliers.
-- **Supplier Directory & Evaluation**: Vendor rating, lead time tracking, and price comparison.
-- **Goods Receipt Note (GRN) & Inward Inspection**: Receiving shipments at warehouse, quality check, and serial number capture.
-- **Serial Number Traceability**: Barcode / QR-code scanning for every individual PV module and inverter unit from warehouse intake to field dispatch.
+- **Warehouse & Bin Storage**: Multi-warehouse storage locations, bin-level tracking, and putaway workflows.
+- **Project Kit Reservation**: Hard reservation of serialized PV modules and inverters to specific projects.
+- **Pick, Pack & Dispatch Logistics**: Solar installation kit pick lists, outward gate passes, vehicle tracking, and customer site delivery.
+- **Field Installation Consumption**: Technicians scanning installed serials on site for warranty activation.

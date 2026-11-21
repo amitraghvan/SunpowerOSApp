@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   BadRequestException,
   NotFoundException,
+  ConflictException,
   Logger,
 } from '@nestjs/common';
 import * as crypto from 'crypto';
@@ -13,6 +14,7 @@ import { SessionService } from './session.service';
 import { AccessControlService } from '../access-control/access-control.service';
 import {
   LoginRequestDto,
+  RegisterRequestDto,
   AuthResponseDto,
   ForgotPasswordRequestDto,
   ResetPasswordRequestDto,
@@ -355,6 +357,214 @@ export class AuthService {
 
     return {
       message: 'Password has been successfully reset. Please log in with your new password.',
+    };
+  }
+
+  /**
+   * Self-service registration: creates user, organization, default branch, assigns ORG_ADMIN, and creates session.
+   */
+  async register(
+    dto: RegisterRequestDto,
+    ipAddress?: string,
+    userAgent?: string
+  ): Promise<AuthResponseDto> {
+    const email = dto.email.toLowerCase().trim();
+    if (!dto.termsAccepted || !dto.privacyAccepted) {
+      throw new BadRequestException('You must accept the terms of service and privacy policy.');
+    }
+
+    // 1. Check existing user
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email },
+    });
+    if (existingUser && existingUser.passwordHash) {
+      throw new ConflictException('An account with this email already exists. Please sign in.');
+    }
+
+    // 2. Prepare slug
+    let baseSlug = (dto.organizationSlug || dto.organizationName)
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+    if (!baseSlug) baseSlug = 'workspace';
+
+    let orgSlug = baseSlug;
+    let counter = 1;
+    while (await this.prisma.organization.findUnique({ where: { slug: orgSlug } })) {
+      orgSlug = `${baseSlug}-${counter}`;
+      counter++;
+    }
+
+    // 3. Hash password
+    const passwordHash = await this.passwordService.hashPassword(dto.password);
+
+    // 4. Create or update user
+    let user = existingUser;
+    if (!user) {
+      user = await this.prisma.user.create({
+        data: {
+          email,
+          firstName: dto.firstName.trim(),
+          lastName: dto.lastName.trim(),
+          phone: dto.phone?.trim() || null,
+          passwordHash,
+          status: 'ACTIVE',
+          isActive: true,
+          isSuperAdmin: false,
+        },
+      });
+    } else {
+      user = await this.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          firstName: dto.firstName.trim(),
+          lastName: dto.lastName.trim(),
+          phone: dto.phone?.trim() || user.phone,
+          passwordHash,
+          status: 'ACTIVE',
+          isActive: true,
+        },
+      });
+    }
+
+    // 5. Create Organization
+    const organization = await this.prisma.organization.create({
+      data: {
+        name: dto.organizationName.trim(),
+        slug: orgSlug,
+        legalName: dto.organizationName.trim(),
+        isActive: true,
+      },
+    });
+
+    // 6. Create default Headquarter Branch, Membership, and Role inside tenant context
+    const { branch, membership } = await this.prisma.forTenant(organization.id, async (tx) => {
+      const b = await tx.organizationBranch.create({
+        data: {
+          organizationId: organization.id,
+          code: 'HQ',
+          name: 'Headquarters',
+          city: dto.city?.trim() || 'New Delhi',
+          state: dto.state?.trim() || 'Delhi',
+          isActive: true,
+        },
+      });
+
+      const m = await tx.organizationMembership.create({
+        data: {
+          organizationId: organization.id,
+          userId: user.id,
+          branchId: b.id,
+          isActive: true,
+        },
+      });
+
+      return { branch: b, membership: m };
+    });
+
+    // 8. Find or seed ORG_ADMIN role
+    let orgAdminRole = await this.prisma.role.findFirst({
+      where: { code: 'ORG_ADMIN' },
+    });
+    if (!orgAdminRole) {
+      orgAdminRole = await this.prisma.role.create({
+        data: {
+          code: 'ORG_ADMIN',
+          name: 'Organization Administrator',
+          description: 'Full administrative access to the organization',
+          scope: 'ORGANIZATION',
+          category: 'ADMIN',
+        },
+      });
+    }
+
+    await this.prisma.membershipRole.create({
+      data: {
+        membershipId: membership.id,
+        roleId: orgAdminRole.id,
+      },
+    });
+
+    // 9. Audit Log
+    try {
+      await this.prisma.auditLog.create({
+        data: {
+          organizationId: organization.id,
+          userId: user.id,
+          action: 'REGISTER_ORGANIZATION',
+          entityType: 'organizations',
+          entityId: organization.id,
+          metadata: {
+            organizationName: organization.name,
+            slug: organization.slug,
+          },
+          ipAddress: ipAddress || '127.0.0.1',
+          userAgent: userAgent || 'SunPowerOS Web',
+        },
+      });
+    } catch {
+      // non-blocking
+    }
+
+    // 10. Create Session
+    const { rawToken, expiresAt } = await this.sessionService.createSession({
+      userId: user.id,
+      organizationId: organization.id,
+      ipAddress,
+      userAgent,
+      rememberMe: true,
+    });
+
+    // 11. Effective permissions
+    const effective = await this.accessControlService.getEffectivePermissions(user.id, organization.id);
+
+    const userProfile: UserProfile = {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      phone: user.phone,
+      status: user.status as any,
+      isActive: user.isActive,
+      isSuperAdmin: user.isSuperAdmin,
+      twoFactorEnabled: user.twoFactorEnabled,
+      failedLoginAttempts: 0,
+      lockedUntil: null,
+      lastLoginAt: new Date(),
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
+
+    const membershipsList: UserMembershipInfo[] = [
+      {
+        organizationId: organization.id,
+        organizationName: organization.name,
+        organizationSlug: organization.slug,
+        branchId: branch.id,
+        branchName: branch.name,
+        roles: ['ORG_ADMIN'],
+        isDefault: true,
+      },
+    ];
+
+    return {
+      user: userProfile,
+      activeOrganization: {
+        id: organization.id,
+        slug: organization.slug,
+        name: organization.name,
+      },
+      activeBranch: {
+        id: branch.id,
+        code: branch.code,
+        name: branch.name,
+      },
+      roles: effective.roles.length > 0 ? effective.roles : ['ORG_ADMIN'],
+      permissions: effective.permissions,
+      memberships: membershipsList,
+      sessionToken: rawToken,
+      expiresIn: Math.floor((expiresAt.getTime() - Date.now()) / 1000),
     };
   }
 }

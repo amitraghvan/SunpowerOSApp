@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common';
+import { InventoryController } from './inventory.controller';
+import { InventoryService } from './inventory.service';
+import { DatabaseModule } from '../../database/database.module';
+import { NumberingService } from '../../common/services/numbering.service';
 
-/**
- * Inventory Domain Module (Supply Chain)
- * Stock level tracking across main warehouses and technician field kits
- */
 @Module({
-  controllers: [],
-  providers: [],
-  exports: [],
+  imports: [DatabaseModule],
+  controllers: [InventoryController],
+  providers: [InventoryService, NumberingService],
+  exports: [InventoryService],
 })
 export class InventoryModule {}

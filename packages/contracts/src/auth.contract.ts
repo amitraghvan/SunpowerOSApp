@@ -101,3 +101,22 @@ export interface AcceptInvitationRequestDto {
   firstName?: string;
   lastName?: string;
 }
+
+export interface RegisterRequestDto {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  phone?: string;
+  country?: string;
+  organizationName: string;
+  organizationSlug?: string;
+  businessCategory?: string;
+  city?: string;
+  state?: string;
+  timezone?: string;
+  currency?: string;
+  termsAccepted: boolean;
+  privacyAccepted: boolean;
+}
+

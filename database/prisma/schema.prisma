@@ -65,6 +65,35 @@ model Organization {
   salesOrderMilestones        SalesOrderMilestone[]
   projectInitiations          ProjectInitiation[]
 
+  // Phase 3: Procurement, Supplier Management, PO, GRN & Serials
+  suppliers                   Supplier[]
+  supplierContacts            SupplierContact[]
+  supplierAddresses           SupplierAddress[]
+  supplierBankAccounts        SupplierBankAccount[]
+  supplierDocuments           SupplierDocument[]
+  supplierProductMappings     SupplierProductMapping[]
+  supplierPriceHistories      SupplierPriceHistory[]
+  materialRequirements        MaterialRequirement[]
+  materialRequirementLines    MaterialRequirementLine[]
+  purchaseRequisitions        PurchaseRequisition[]
+  purchaseRequisitionLines    PurchaseRequisitionLine[]
+  rfqs                        RFQ[]
+  rfqLines                    RFQLine[]
+  rfqSuppliers                RFQSupplier[]
+  supplierQuotations          SupplierQuotation[]
+  supplierQuotationLines      SupplierQuotationLine[]
+  purchaseOrders              PurchaseOrder[]
+  purchaseOrderLines          PurchaseOrderLine[]
+  purchaseDeliverySchedules   PurchaseDeliverySchedule[]
+  goodsReceiptNotes           GoodsReceiptNote[]
+  goodsReceiptLines           GoodsReceiptLine[]
+  qualityInspections          QualityInspection[]
+  productSerials              ProductSerial[]
+  inventoryLocations          InventoryLocation[]
+  inventoryReceiptMovements   InventoryReceiptMovement[]
+  supplierReturns             SupplierReturn[]
+  supplierReturnLines         SupplierReturnLine[]
+
   @@map("organizations")
 }
 
@@ -143,6 +172,20 @@ model User {
   createdSalesOrders     SalesOrder[]                @relation("SalesOrderCreatedBy")
   confirmedSalesOrders   SalesOrder[]                @relation("SalesOrderConfirmedBy")
   initiatedProjects      ProjectInitiation[]         @relation("ProjectInitiatedBy")
+
+  // Phase 3 Relations
+  supplierPriceChanges        SupplierPriceHistory[]      @relation("PriceChangedBy")
+  createdMaterialRequirements MaterialRequirement[]       @relation("RequirementCreatedBy")
+  createdRequisitions         PurchaseRequisition[]       @relation("RequisitionRequestedBy")
+  approvedRequisitions        PurchaseRequisition[]       @relation("RequisitionApprovedBy")
+  createdRFQs                 RFQ[]                       @relation("RFQCreatedBy")
+  createdPurchaseOrders       PurchaseOrder[]             @relation("POCreatedBy")
+  approvedPurchaseOrders      PurchaseOrder[]             @relation("POApprovedBy")
+  receivedGRNs                GoodsReceiptNote[]          @relation("GRNReceivedBy")
+  performedInspections        QualityInspection[]         @relation("InspectionPerformedBy")
+  registeredSerials           ProductSerial[]             @relation("SerialRegisteredBy")
+  createdMovements            InventoryReceiptMovement[]  @relation("MovementCreatedBy")
+  createdSupplierReturns      SupplierReturn[]            @relation("ReturnCreatedBy")
 
   @@map("users")
 }
@@ -834,6 +877,20 @@ model ProductVariant {
   designStructures   EngineeringDesignRevision[] @relation("DesignStructureVariant")
   bomItems           BOMItem[]
 
+  // Phase 3 Relations
+  supplierMappings            SupplierProductMapping[]
+  supplierPriceHistories      SupplierPriceHistory[]
+  materialRequirementLines    MaterialRequirementLine[]
+  requisitionLines            PurchaseRequisitionLine[]
+  rfqLines                    RFQLine[]
+  quotationLines              SupplierQuotationLine[]
+  purchaseOrderLines          PurchaseOrderLine[]
+  goodsReceiptLines           GoodsReceiptLine[]
+  qualityInspections          QualityInspection[]
+  serials                     ProductSerial[]
+  inventoryMovements          InventoryReceiptMovement[]
+  supplierReturnLines         SupplierReturnLine[]
+
   @@unique([organizationId, sku])
   @@index([organizationId])
   @@index([productId])
@@ -1126,6 +1183,7 @@ model BillOfMaterials {
   costEstimates     CostEstimate[]
   quotations        Quotation[]
   salesOrders       SalesOrder[]
+  materialRequirements MaterialRequirement[]
 
   @@unique([organizationId, bomNumber])
   @@index([organizationId])
@@ -1421,6 +1479,9 @@ model SalesOrder {
   confirmedBy      User?                 @relation("SalesOrderConfirmedBy", fields: [confirmedById], references: [id], onDelete: SetNull)
   milestones       SalesOrderMilestone[]
   projectInitiation ProjectInitiation?
+  materialRequirements MaterialRequirement[]
+  purchaseRequisitions PurchaseRequisition[]
+  purchaseOrders       PurchaseOrder[]
 
   @@unique([organizationId, orderNumber])
   @@index([organizationId])
@@ -1475,6 +1536,9 @@ model ProjectInitiation {
   customer          Customer          @relation(fields: [customerId], references: [id], onDelete: Cascade)
   site              CustomerSite      @relation(fields: [siteId], references: [id], onDelete: Cascade)
   initiatedBy       User              @relation("ProjectInitiatedBy", fields: [initiatedById], references: [id], onDelete: Restrict)
+  materialRequirements MaterialRequirement[]
+  purchaseRequisitions PurchaseRequisition[]
+  purchaseOrders       PurchaseOrder[]
 
   @@unique([organizationId, projectCode])
   @@index([organizationId])
@@ -1482,4 +1546,845 @@ model ProjectInitiation {
   @@index([customerId])
   @@index([siteId])
   @@map("project_initiations")
+}
+
+// =============================================================================
+// PHASE 3: SUPPLIER MANAGEMENT, MRP, RFQ, PO, GRN, QUALITY & SERIAL TRACKING
+// =============================================================================
+
+model Supplier {
+  id                String                   @id @default(uuid())
+  organizationId    String
+  supplierCode      String
+  legalName         String
+  tradeName         String?
+  category          String                   @default("DISTRIBUTOR") // MANUFACTURER, DISTRIBUTOR, WHOLESALER, IMPORTER, SERVICE_PROVIDER
+  supplierType      String                   @default("SOLAR_PANELS") // SOLAR_PANELS, INVERTERS, BATTERIES, BOS, STRUCTURE, ELECTRICAL, GENERAL
+  gstin             String?
+  pan               String?
+  msmeNumber        String?
+  status            String                   @default("ACTIVE") // PROSPECTIVE, ACTIVE, ON_HOLD, BLACKLISTED
+  paymentTerms      String                   @default("NET_30") // ADVANCE, NET_15, NET_30, NET_45, NET_60, LC, PDC
+  creditPeriodDays  Int                      @default(30)
+  creditLimit       Decimal                  @default(0) @db.Decimal(14, 2)
+  currency          String                   @default("INR")
+  rating            Decimal?                 @db.Decimal(3, 2)
+  notes             String?
+  isActive          Boolean                  @default(true)
+  createdAt         DateTime                 @default(now())
+  updatedAt         DateTime                 @updatedAt
+  deletedAt         DateTime?
+
+  organization      Organization             @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  contacts          SupplierContact[]
+  addresses         SupplierAddress[]
+  bankAccounts      SupplierBankAccount[]
+  documents         SupplierDocument[]
+  productMappings   SupplierProductMapping[]
+  priceHistories    SupplierPriceHistory[]
+  rfqSuppliers      RFQSupplier[]
+  quotations        SupplierQuotation[]
+  purchaseOrders    PurchaseOrder[]
+  goodsReceiptNotes GoodsReceiptNote[]
+  supplierReturns   SupplierReturn[]
+
+  @@unique([organizationId, supplierCode])
+  @@index([organizationId])
+  @@index([category])
+  @@index([supplierType])
+  @@index([status])
+  @@index([gstin])
+  @@map("suppliers")
+}
+
+model SupplierContact {
+  id             String       @id @default(uuid())
+  organizationId String
+  supplierId     String
+  name           String
+  designation    String?
+  department     String?
+  email          String?
+  phone          String
+  alternatePhone String?
+  isPrimary      Boolean      @default(false)
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  supplier       Supplier     @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([supplierId])
+  @@map("supplier_contacts")
+}
+
+model SupplierAddress {
+  id             String       @id @default(uuid())
+  organizationId String
+  supplierId     String
+  type           String       @default("BILLING") // REGISTERED, FACTORY, WAREHOUSE, BILLING, DISPATCH
+  addressLine1   String
+  addressLine2   String?
+  landmark       String?
+  city           String
+  state          String
+  postalCode     String
+  country        String       @default("IN")
+  isDefault      Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  supplier       Supplier     @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([supplierId])
+  @@map("supplier_addresses")
+}
+
+model SupplierBankAccount {
+  id             String       @id @default(uuid())
+  organizationId String
+  supplierId     String
+  bankName       String
+  accountNumber  String
+  ifscCode       String
+  branchName     String?
+  accountType    String       @default("CURRENT") // CURRENT, SAVINGS
+  isPrimary      Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  supplier       Supplier     @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([supplierId])
+  @@map("supplier_bank_accounts")
+}
+
+model SupplierDocument {
+  id             String       @id @default(uuid())
+  organizationId String
+  supplierId     String
+  documentType   String       // GST_CERTIFICATE, PAN_CARD, MSME_CERTIFICATE, CANCELLED_CHEQUE, ISO_CERTIFICATE, DEALERSHIP_CERTIFICATE, OTHER
+  documentNumber String?
+  fileUrl        String
+  fileName       String
+  fileSizeBytes  Int?
+  mimeType       String?
+  expiryDate     DateTime?
+  verifiedAt     DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  supplier       Supplier     @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([supplierId])
+  @@index([documentType])
+  @@map("supplier_documents")
+}
+
+model SupplierProductMapping {
+  id                   String                 @id @default(uuid())
+  organizationId       String
+  supplierId           String
+  productVariantId     String
+  supplierPartCode     String?
+  supplierPartName     String?
+  leadTimeDays         Int                    @default(7)
+  minimumOrderQuantity Decimal                @default(1) @db.Decimal(10, 2)
+  unitPrice            Decimal                @db.Decimal(12, 2)
+  taxRatePercent       Decimal                @default(18) @db.Decimal(5, 2)
+  isPreferred          Boolean                @default(false)
+  currency             String                 @default("INR")
+  effectiveFrom        DateTime               @default(now())
+  effectiveTo          DateTime?
+  isActive             Boolean                @default(true)
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+
+  organization         Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  supplier             Supplier               @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  productVariant       ProductVariant         @relation(fields: [productVariantId], references: [id], onDelete: Cascade)
+  priceHistories       SupplierPriceHistory[]
+
+  @@unique([organizationId, supplierId, productVariantId])
+  @@index([organizationId])
+  @@index([supplierId])
+  @@index([productVariantId])
+  @@map("supplier_product_mappings")
+}
+
+model SupplierPriceHistory {
+  id                       String                  @id @default(uuid())
+  organizationId           String
+  supplierProductMappingId String?
+  supplierId               String
+  productVariantId         String
+  oldPrice                 Decimal                 @db.Decimal(12, 2)
+  newPrice                 Decimal                 @db.Decimal(12, 2)
+  currency                 String                  @default("INR")
+  effectiveDate            DateTime                @default(now())
+  reason                   String?
+  changedById              String?
+  createdAt                DateTime                @default(now())
+
+  organization             Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  mapping                  SupplierProductMapping? @relation(fields: [supplierProductMappingId], references: [id], onDelete: SetNull)
+  supplier                 Supplier                @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  productVariant           ProductVariant          @relation(fields: [productVariantId], references: [id], onDelete: Cascade)
+  changedBy                User?                   @relation("PriceChangedBy", fields: [changedById], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([supplierId])
+  @@index([productVariantId])
+  @@map("supplier_price_history")
+}
+
+model MaterialRequirement {
+  id                   String                    @id @default(uuid())
+  organizationId       String
+  requirementNumber    String
+  title                String
+  projectInitiationId  String?
+  salesOrderId         String?
+  bomId                String?
+  status               String                    @default("DRAFT") // DRAFT, CALCULATED, CONVERTED_TO_PR, CANCELLED
+  totalItems           Int                       @default(0)
+  estimatedTotalAmount Decimal                   @default(0) @db.Decimal(14, 2)
+  plannedDate          DateTime?
+  createdById          String?
+  createdAt            DateTime                  @default(now())
+  updatedAt            DateTime                  @updatedAt
+
+  organization         Organization              @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  projectInitiation    ProjectInitiation?        @relation(fields: [projectInitiationId], references: [id], onDelete: SetNull)
+  salesOrder           SalesOrder?               @relation(fields: [salesOrderId], references: [id], onDelete: SetNull)
+  bom                  BillOfMaterials?          @relation(fields: [bomId], references: [id], onDelete: SetNull)
+  createdBy            User?                     @relation("RequirementCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  lines                MaterialRequirementLine[]
+  purchaseRequisitions PurchaseRequisition[]
+
+  @@unique([organizationId, requirementNumber])
+  @@index([organizationId])
+  @@index([projectInitiationId])
+  @@index([salesOrderId])
+  @@index([status])
+  @@map("material_requirements")
+}
+
+model MaterialRequirementLine {
+  id                     String              @id @default(uuid())
+  organizationId         String
+  materialRequirementId  String
+  productVariantId       String
+  category               String?             // SOLAR_PANEL, INVERTER, BATTERY, STRUCTURE, BOS_ELECTRICAL, FASTENERS, SAFETY
+  requiredQuantity       Decimal             @db.Decimal(10, 2)
+  existingStockQuantity  Decimal             @default(0) @db.Decimal(10, 2)
+  allocatedStockQuantity Decimal             @default(0) @db.Decimal(10, 2)
+  netProcurementQuantity Decimal             @db.Decimal(10, 2)
+  estimatedUnitCost      Decimal             @db.Decimal(12, 2)
+  estimatedTotalCost     Decimal             @db.Decimal(12, 2)
+  unitOfMeasure          String              @default("PCS")
+  notes                  String?
+  createdAt              DateTime            @default(now())
+  updatedAt              DateTime            @updatedAt
+
+  organization           Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  materialRequirement    MaterialRequirement @relation(fields: [materialRequirementId], references: [id], onDelete: Cascade)
+  productVariant         ProductVariant      @relation(fields: [productVariantId], references: [id], onDelete: Restrict)
+
+  @@index([organizationId])
+  @@index([materialRequirementId])
+  @@index([productVariantId])
+  @@map("material_requirement_lines")
+}
+
+model PurchaseRequisition {
+  id                    String                    @id @default(uuid())
+  organizationId        String
+  requisitionNumber     String
+  title                 String
+  purpose               String                    @default("PROJECT_SPECIFIC") // PROJECT_SPECIFIC, STOCK_REPLENISHMENT, EMERGENCY
+  status                String                    @default("DRAFT") // DRAFT, SUBMITTED, APPROVED, REJECTED, RFQ_GENERATED, PARTIALLY_ORDERED, ORDERED, CANCELLED
+  priority              String                    @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
+  requiredByDate        DateTime?
+  projectInitiationId   String?
+  salesOrderId          String?
+  materialRequirementId String?
+  requestedById         String?
+  approvedById          String?
+  approvedAt            DateTime?
+  rejectionReason       String?
+  totalEstimatedAmount  Decimal                   @default(0) @db.Decimal(14, 2)
+  notes                 String?
+  createdAt             DateTime                  @default(now())
+  updatedAt             DateTime                  @updatedAt
+
+  organization          Organization              @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  projectInitiation     ProjectInitiation?        @relation(fields: [projectInitiationId], references: [id], onDelete: SetNull)
+  salesOrder            SalesOrder?               @relation(fields: [salesOrderId], references: [id], onDelete: SetNull)
+  materialRequirement   MaterialRequirement?      @relation(fields: [materialRequirementId], references: [id], onDelete: SetNull)
+  requestedBy           User?                     @relation("RequisitionRequestedBy", fields: [requestedById], references: [id], onDelete: SetNull)
+  approvedBy            User?                     @relation("RequisitionApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+  lines                 PurchaseRequisitionLine[]
+  rfqs                  RFQ[]
+  purchaseOrders        PurchaseOrder[]
+
+  @@unique([organizationId, requisitionNumber])
+  @@index([organizationId])
+  @@index([projectInitiationId])
+  @@index([salesOrderId])
+  @@index([status])
+  @@map("purchase_requisitions")
+}
+
+model PurchaseRequisitionLine {
+  id                    String              @id @default(uuid())
+  organizationId        String
+  purchaseRequisitionId String
+  productVariantId      String
+  requestedQuantity     Decimal             @db.Decimal(10, 2)
+  approvedQuantity      Decimal             @default(0) @db.Decimal(10, 2)
+  orderedQuantity       Decimal             @default(0) @db.Decimal(10, 2)
+  estimatedUnitCost     Decimal             @db.Decimal(12, 2)
+  estimatedTotalCost    Decimal             @db.Decimal(12, 2)
+  notes                 String?
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+
+  organization          Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  purchaseRequisition   PurchaseRequisition @relation(fields: [purchaseRequisitionId], references: [id], onDelete: Cascade)
+  productVariant        ProductVariant      @relation(fields: [productVariantId], references: [id], onDelete: Restrict)
+
+  @@index([organizationId])
+  @@index([purchaseRequisitionId])
+  @@index([productVariantId])
+  @@map("purchase_requisition_lines")
+}
+
+model RFQ {
+  id                  String              @id @default(uuid())
+  organizationId      String
+  rfqNumber           String
+  title               String
+  requisitionId       String?
+  status              String              @default("DRAFT") // DRAFT, ISSUED, RESPONSES_RECEIVED, UNDER_EVALUATION, AWARDED, CANCELLED
+  issueDate           DateTime            @default(now())
+  dueDate             DateTime
+  awardedSupplierId   String?
+  termsAndConditions  String?
+  notes               String?
+  createdById         String?
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  organization        Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  requisition         PurchaseRequisition? @relation(fields: [requisitionId], references: [id], onDelete: SetNull)
+  createdBy           User?               @relation("RFQCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  lines               RFQLine[]
+  suppliers           RFQSupplier[]
+  quotations          SupplierQuotation[]
+
+  @@unique([organizationId, rfqNumber])
+  @@index([organizationId])
+  @@index([requisitionId])
+  @@index([status])
+  @@map("rfqs")
+}
+
+model RFQLine {
+  id                String                  @id @default(uuid())
+  organizationId    String
+  rfqId             String
+  productVariantId  String
+  targetQuantity    Decimal                 @db.Decimal(10, 2)
+  targetUnitPrice   Decimal?                @db.Decimal(12, 2)
+  targetDeliveryDate DateTime?
+  specifications    String?
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
+
+  organization      Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  rfq               RFQ                     @relation(fields: [rfqId], references: [id], onDelete: Cascade)
+  productVariant    ProductVariant          @relation(fields: [productVariantId], references: [id], onDelete: Restrict)
+  quotationLines    SupplierQuotationLine[]
+
+  @@index([organizationId])
+  @@index([rfqId])
+  @@index([productVariantId])
+  @@map("rfq_lines")
+}
+
+model RFQSupplier {
+  id               String       @id @default(uuid())
+  organizationId   String
+  rfqId            String
+  supplierId       String
+  invitationStatus String       @default("INVITED") // INVITED, ACKNOWLEDGED, DECLINED, QUOTED
+  invitedAt        DateTime     @default(now())
+  respondedAt      DateTime?
+  notes            String?
+  createdAt        DateTime     @default(now())
+
+  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  rfq              RFQ          @relation(fields: [rfqId], references: [id], onDelete: Cascade)
+  supplier         Supplier     @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, rfqId, supplierId])
+  @@index([organizationId])
+  @@index([rfqId])
+  @@index([supplierId])
+  @@map("rfq_suppliers")
+}
+
+model SupplierQuotation {
+  id                    String                  @id @default(uuid())
+  organizationId        String
+  quotationNumber       String
+  rfqId                 String?
+  supplierId            String
+  supplierQuoteReference String?
+  quotationDate         DateTime                @default(now())
+  validUntilDate        DateTime
+  currency              String                  @default("INR")
+  subtotalAmount        Decimal                 @db.Decimal(14, 2)
+  taxAmount             Decimal                 @db.Decimal(14, 2)
+  freightCharges        Decimal                 @default(0) @db.Decimal(12, 2)
+  otherCharges          Decimal                 @default(0) @db.Decimal(12, 2)
+  totalAmount           Decimal                 @db.Decimal(14, 2)
+  deliveryLeadTimeDays  Int                     @default(7)
+  paymentTerms          String                  @default("NET_30")
+  warrantyTerms         String?
+  status                String                  @default("RECEIVED") // RECEIVED, UNDER_REVIEW, ACCEPTED, REJECTED, EXPIRED
+  comparisonRank        Int?
+  isWinning             Boolean                 @default(false)
+  notes                 String?
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+
+  organization          Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  rfq                   RFQ?                    @relation(fields: [rfqId], references: [id], onDelete: SetNull)
+  supplier              Supplier                @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  lines                 SupplierQuotationLine[]
+  purchaseOrders        PurchaseOrder[]
+
+  @@unique([organizationId, quotationNumber])
+  @@index([organizationId])
+  @@index([rfqId])
+  @@index([supplierId])
+  @@index([status])
+  @@map("supplier_quotations")
+}
+
+model SupplierQuotationLine {
+  id                   String            @id @default(uuid())
+  organizationId       String
+  supplierQuotationId  String
+  rfqLineId            String?
+  productVariantId     String
+  quotedQuantity       Decimal           @db.Decimal(10, 2)
+  unitPrice            Decimal           @db.Decimal(12, 2)
+  taxRatePercent       Decimal           @default(18) @db.Decimal(5, 2)
+  taxAmount            Decimal           @db.Decimal(12, 2)
+  totalPrice           Decimal           @db.Decimal(12, 2)
+  deliveryLeadTimeDays Int?
+  notes                String?
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+
+  organization         Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  supplierQuotation    SupplierQuotation @relation(fields: [supplierQuotationId], references: [id], onDelete: Cascade)
+  rfqLine              RFQLine?          @relation(fields: [rfqLineId], references: [id], onDelete: SetNull)
+  productVariant       ProductVariant    @relation(fields: [productVariantId], references: [id], onDelete: Restrict)
+
+  @@index([organizationId])
+  @@index([supplierQuotationId])
+  @@index([productVariantId])
+  @@map("supplier_quotation_lines")
+}
+
+model PurchaseOrder {
+  id                   String                     @id @default(uuid())
+  organizationId       String
+  poNumber             String
+  version              Int                        @default(1)
+  originalPoId         String?
+  requisitionId        String?
+  quotationId          String?
+  supplierId           String
+  projectInitiationId  String?
+  salesOrderId         String?
+  status               String                     @default("DRAFT") // DRAFT, PENDING_APPROVAL, APPROVED, ISSUED, ACKNOWLEDGED, PARTIALLY_RECEIVED, FULLY_RECEIVED, CANCELLED, CLOSED
+  approvalStatus       String                     @default("PENDING") // PENDING, APPROVED, REJECTED
+  orderDate            DateTime                   @default(now())
+  expectedDeliveryDate DateTime
+  billingAddress       Json?
+  shippingAddress      Json?
+  currency             String                     @default("INR")
+  subtotalAmount       Decimal                    @db.Decimal(14, 2)
+  taxAmount            Decimal                    @db.Decimal(14, 2)
+  freightAmount        Decimal                    @default(0) @db.Decimal(12, 2)
+  roundOff             Decimal                    @default(0) @db.Decimal(6, 2)
+  totalAmount          Decimal                    @db.Decimal(14, 2)
+  paymentTerms         String                     @default("NET_30")
+  termsAndConditions   String?
+  notes                String?
+  versionComments      String?
+  createdById          String?
+  approvedById         String?
+  approvedAt           DateTime?
+  createdAt            DateTime                   @default(now())
+  updatedAt            DateTime                   @updatedAt
+
+  organization         Organization               @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  originalPo           PurchaseOrder?             @relation("PurchaseOrderRevisions", fields: [originalPoId], references: [id], onDelete: SetNull)
+  revisions            PurchaseOrder[]            @relation("PurchaseOrderRevisions")
+  requisition          PurchaseRequisition?       @relation(fields: [requisitionId], references: [id], onDelete: SetNull)
+  quotation            SupplierQuotation?         @relation(fields: [quotationId], references: [id], onDelete: SetNull)
+  supplier             Supplier                   @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  projectInitiation    ProjectInitiation?         @relation(fields: [projectInitiationId], references: [id], onDelete: SetNull)
+  salesOrder           SalesOrder?                @relation(fields: [salesOrderId], references: [id], onDelete: SetNull)
+  createdBy            User?                      @relation("POCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  approvedBy           User?                      @relation("POApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+  lines                PurchaseOrderLine[]
+  deliverySchedules    PurchaseDeliverySchedule[]
+  goodsReceiptNotes    GoodsReceiptNote[]
+  supplierReturns      SupplierReturn[]
+
+  @@unique([organizationId, poNumber, version])
+  @@index([organizationId])
+  @@index([supplierId])
+  @@index([projectInitiationId])
+  @@index([status])
+  @@map("purchase_orders")
+}
+
+model PurchaseOrderLine {
+  id                String                     @id @default(uuid())
+  organizationId    String
+  purchaseOrderId   String
+  productVariantId  String
+  itemDescription   String?
+  hsnCode           String?
+  orderedQuantity   Decimal                    @db.Decimal(10, 2)
+  receivedQuantity  Decimal                    @default(0) @db.Decimal(10, 2)
+  acceptedQuantity  Decimal                    @default(0) @db.Decimal(10, 2)
+  rejectedQuantity  Decimal                    @default(0) @db.Decimal(10, 2)
+  unitPrice         Decimal                    @db.Decimal(12, 2)
+  discountPercent   Decimal                    @default(0) @db.Decimal(5, 2)
+  taxRatePercent    Decimal                    @default(18) @db.Decimal(5, 2)
+  taxAmount         Decimal                    @db.Decimal(12, 2)
+  totalAmount       Decimal                    @db.Decimal(14, 2)
+  expectedDate      DateTime?
+  isFullyReceived   Boolean                    @default(false)
+  createdAt         DateTime                   @default(now())
+  updatedAt         DateTime                   @updatedAt
+
+  organization      Organization               @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  purchaseOrder     PurchaseOrder              @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  productVariant    ProductVariant             @relation(fields: [productVariantId], references: [id], onDelete: Restrict)
+  deliverySchedules PurchaseDeliverySchedule[]
+  goodsReceiptLines GoodsReceiptLine[]
+
+  @@index([organizationId])
+  @@index([purchaseOrderId])
+  @@index([productVariantId])
+  @@map("purchase_order_lines")
+}
+
+model PurchaseDeliverySchedule {
+  id                 String            @id @default(uuid())
+  organizationId     String
+  purchaseOrderId    String
+  purchaseOrderLineId String
+  scheduledQuantity  Decimal           @db.Decimal(10, 2)
+  scheduledDate      DateTime
+  receivedQuantity   Decimal           @default(0) @db.Decimal(10, 2)
+  status             String            @default("PENDING") // PENDING, IN_TRANSIT, RECEIVED, DELAYED, CANCELLED
+  trackingReference  String?
+  courierTransporter String?
+  notes              String?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  organization       Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  purchaseOrder      PurchaseOrder     @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  purchaseOrderLine  PurchaseOrderLine @relation(fields: [purchaseOrderLineId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([purchaseOrderId])
+  @@index([purchaseOrderLineId])
+  @@map("purchase_delivery_schedules")
+}
+
+model InventoryLocation {
+  id                 String                    @id @default(uuid())
+  organizationId     String
+  code               String
+  name               String
+  type               String                    @default("MAIN_WAREHOUSE") // RECEIVING_BAY, MAIN_WAREHOUSE, INSPECTION_ZONE, QUARANTINE, PROJECT_STAGING, DAMAGED_GOODS
+  address            String?
+  isDefaultReceiving Boolean                   @default(false)
+  isActive           Boolean                   @default(true)
+  createdAt          DateTime                  @default(now())
+  updatedAt          DateTime                  @updatedAt
+
+  organization       Organization              @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  goodsReceipts      GoodsReceiptNote[]
+  fromMovements      InventoryReceiptMovement[] @relation("MovementFromLocation")
+  toMovements        InventoryReceiptMovement[] @relation("MovementToLocation")
+  serials            ProductSerial[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId])
+  @@index([type])
+  @@map("inventory_locations")
+}
+
+model GoodsReceiptNote {
+  id                    String                     @id @default(uuid())
+  organizationId        String
+  grnNumber             String
+  purchaseOrderId       String
+  supplierId            String
+  supplierInvoiceNumber String?
+  supplierInvoiceDate   DateTime?
+  supplierChallanNumber String?
+  supplierChallanDate   DateTime?
+  gatePassNumber        String?
+  vehicleNumber         String?
+  transporterName       String?
+  lrNumber              String?
+  receivedDate          DateTime                   @default(now())
+  status                String                     @default("DRAFT") // DRAFT, RECEIVED_AT_GATE, INSPECTION_PENDING, INSPECTED, PARTIALLY_ACCEPTED, FULLY_ACCEPTED, REJECTED, STOCKED
+  receivedById          String?
+  receivedLocationId    String?
+  remarks               String?
+  createdAt             DateTime                   @default(now())
+  updatedAt             DateTime                   @updatedAt
+
+  organization          Organization               @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  purchaseOrder         PurchaseOrder              @relation(fields: [purchaseOrderId], references: [id], onDelete: Restrict)
+  supplier              Supplier                   @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  receivedBy            User?                      @relation("GRNReceivedBy", fields: [receivedById], references: [id], onDelete: SetNull)
+  receivedLocation      InventoryLocation?         @relation(fields: [receivedLocationId], references: [id], onDelete: SetNull)
+  lines                 GoodsReceiptLine[]
+  qualityInspections    QualityInspection[]
+  serials               ProductSerial[]
+  supplierReturns       SupplierReturn[]
+
+  @@unique([organizationId, grnNumber])
+  @@index([organizationId])
+  @@index([purchaseOrderId])
+  @@index([supplierId])
+  @@index([status])
+  @@map("goods_receipt_notes")
+}
+
+model GoodsReceiptLine {
+  id                 String              @id @default(uuid())
+  organizationId     String
+  goodsReceiptNoteId String
+  purchaseOrderLineId String
+  productVariantId   String
+  challanQuantity    Decimal             @db.Decimal(10, 2)
+  receivedQuantity   Decimal             @db.Decimal(10, 2)
+  acceptedQuantity   Decimal             @default(0) @db.Decimal(10, 2)
+  rejectedQuantity   Decimal             @default(0) @db.Decimal(10, 2)
+  shortageQuantity   Decimal             @default(0) @db.Decimal(10, 2)
+  damagedQuantity    Decimal             @default(0) @db.Decimal(10, 2)
+  excessQuantity     Decimal             @default(0) @db.Decimal(10, 2)
+  unitCost           Decimal             @db.Decimal(12, 2)
+  inspectionStatus   String              @default("PENDING") // PENDING, PASSED, REJECTED, CONDITIONAL_PASS
+  notes              String?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  organization       Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  goodsReceiptNote   GoodsReceiptNote    @relation(fields: [goodsReceiptNoteId], references: [id], onDelete: Cascade)
+  purchaseOrderLine  PurchaseOrderLine   @relation(fields: [purchaseOrderLineId], references: [id], onDelete: Restrict)
+  productVariant     ProductVariant      @relation(fields: [productVariantId], references: [id], onDelete: Restrict)
+  qualityInspections QualityInspection[]
+  serials            ProductSerial[]
+  supplierReturnLines SupplierReturnLine[]
+
+  @@index([organizationId])
+  @@index([goodsReceiptNoteId])
+  @@index([productVariantId])
+  @@map("goods_receipt_lines")
+}
+
+model QualityInspection {
+  id                     String            @id @default(uuid())
+  organizationId         String
+  inspectionNumber       String
+  goodsReceiptNoteId     String
+  goodsReceiptLineId     String
+  productVariantId       String
+  inspectionType         String            @default("COMPLETE") // VISUAL, ELECTRICAL, DIMENSIONAL, COMPLETE
+  totalInspectedQuantity Decimal           @db.Decimal(10, 2)
+  passedQuantity         Decimal           @db.Decimal(10, 2)
+  rejectedQuantity       Decimal           @db.Decimal(10, 2)
+  conditionalQuantity    Decimal           @default(0) @db.Decimal(10, 2)
+  overallOutcome         String            @default("PASS") // PASS, FAIL, CONDITIONAL_PASS
+  checklistResults       Json              // Array of check item objects: { item, result, criteria, notes }
+  measurements           Json?             // Solar specific: { voc, isc, vmp, imp, pmax, elReportRef, etc. }
+  photoEvidenceUrls      String[]          @default([])
+  rejectionReasons       String[]          @default([])
+  actionRecommended      String            @default("ACCEPT") // ACCEPT, REJECT_TO_VENDOR, SORT_AND_USE, REWORK
+  inspectedById          String?
+  inspectedAt            DateTime          @default(now())
+  inspectorNotes         String?
+  createdAt              DateTime          @default(now())
+  updatedAt              DateTime          @updatedAt
+
+  organization           Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  goodsReceiptNote       GoodsReceiptNote  @relation(fields: [goodsReceiptNoteId], references: [id], onDelete: Cascade)
+  goodsReceiptLine       GoodsReceiptLine  @relation(fields: [goodsReceiptLineId], references: [id], onDelete: Cascade)
+  productVariant         ProductVariant    @relation(fields: [productVariantId], references: [id], onDelete: Restrict)
+  inspectedBy            User?             @relation("InspectionPerformedBy", fields: [inspectedById], references: [id], onDelete: SetNull)
+  serials                ProductSerial[]
+
+  @@unique([organizationId, inspectionNumber])
+  @@index([organizationId])
+  @@index([goodsReceiptNoteId])
+  @@index([productVariantId])
+  @@index([overallOutcome])
+  @@map("quality_inspections")
+}
+
+model ProductSerial {
+  id                       String             @id @default(uuid())
+  organizationId           String
+  productVariantId         String
+  goodsReceiptNoteId       String
+  goodsReceiptLineId       String?
+  inspectionId             String?
+  manufacturerSerialNumber String
+  internalAssetCode        String
+  barcode                  String?
+  qrCode                   String?
+  batchNumber              String?
+  status                   String             @default("IN_STOCK") // RECEIVED, INSPECTED, IN_STOCK, ALLOCATED, DISPATCHED, INSTALLED, UNDER_REPAIR, RETURNED_TO_VENDOR, RETIRED
+  storageLocationId        String?
+  electricalSpecs          Json?              // { voc, isc, vmp, imp, pmax, efficiency, flashTestData }
+  warrantyPeriodMonths     Int                @default(60)
+  warrantyExpiresAt        DateTime?
+  commissionedAt           DateTime?
+  registeredById           String?
+  createdAt                DateTime           @default(now())
+  updatedAt                DateTime           @updatedAt
+
+  organization             Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  productVariant           ProductVariant     @relation(fields: [productVariantId], references: [id], onDelete: Restrict)
+  goodsReceiptNote         GoodsReceiptNote   @relation(fields: [goodsReceiptNoteId], references: [id], onDelete: Cascade)
+  goodsReceiptLine         GoodsReceiptLine?  @relation(fields: [goodsReceiptLineId], references: [id], onDelete: SetNull)
+  qualityInspection        QualityInspection? @relation(fields: [inspectionId], references: [id], onDelete: SetNull)
+  storageLocation          InventoryLocation? @relation(fields: [storageLocationId], references: [id], onDelete: SetNull)
+  registeredBy             User?              @relation("SerialRegisteredBy", fields: [registeredById], references: [id], onDelete: SetNull)
+
+  @@unique([organizationId, manufacturerSerialNumber, productVariantId])
+  @@unique([organizationId, internalAssetCode])
+  @@index([organizationId])
+  @@index([productVariantId])
+  @@index([goodsReceiptNoteId])
+  @@index([status])
+  @@index([batchNumber])
+  @@map("product_serials")
+}
+
+model InventoryReceiptMovement {
+  id             String             @id @default(uuid())
+  organizationId String
+  movementNumber String
+  movementType   String             // PURCHASE_RECEIPT, QUALITY_REJECT, SUPPLIER_RETURN, INTERNAL_TRANSFER
+  productVariantId String
+  fromLocationId String?
+  toLocationId   String?
+  quantity       Decimal            @db.Decimal(10, 2)
+  unitCost       Decimal            @db.Decimal(12, 2)
+  totalValue     Decimal            @db.Decimal(14, 2)
+  referenceType  String             // GRN, PO, RETURN, REQUISITION
+  referenceId    String
+  batchNumber    String?
+  notes          String?
+  createdById    String?
+  createdAt      DateTime           @default(now())
+
+  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  productVariant ProductVariant     @relation(fields: [productVariantId], references: [id], onDelete: Restrict)
+  fromLocation   InventoryLocation? @relation("MovementFromLocation", fields: [fromLocationId], references: [id], onDelete: SetNull)
+  toLocation     InventoryLocation? @relation("MovementToLocation", fields: [toLocationId], references: [id], onDelete: SetNull)
+  createdBy      User?              @relation("MovementCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@unique([organizationId, movementNumber])
+  @@index([organizationId])
+  @@index([productVariantId])
+  @@index([movementType])
+  @@index([referenceType, referenceId])
+  @@map("inventory_receipt_movements")
+}
+
+model SupplierReturn {
+  id                 String               @id @default(uuid())
+  organizationId     String
+  returnNumber       String
+  supplierId         String
+  goodsReceiptNoteId String?
+  purchaseOrderId    String?
+  status             String               @default("DRAFT") // DRAFT, SUBMITTED, APPROVED_BY_SUPPLIER, DISPATCHED, CREDIT_NOTE_RECEIVED, REPLACEMENT_RECEIVED, CLOSED, CANCELLED
+  returnType         String               @default("DEFECTIVE_REJECTION") // DEFECTIVE_REJECTION, EXCESS_DELIVERY, WRONG_ITEM, WARRANTY_CLAIM
+  totalReturnAmount  Decimal              @default(0) @db.Decimal(14, 2)
+  dispatchDate       DateTime?
+  transporterDetails Json?
+  debitNoteNumber    String?
+  creditNoteNumber   String?
+  reason             String
+  createdById        String?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+
+  organization       Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  supplier           Supplier             @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  goodsReceiptNote   GoodsReceiptNote?    @relation(fields: [goodsReceiptNoteId], references: [id], onDelete: SetNull)
+  purchaseOrder      PurchaseOrder?       @relation(fields: [purchaseOrderId], references: [id], onDelete: SetNull)
+  createdBy          User?                @relation("ReturnCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  lines              SupplierReturnLine[]
+
+  @@unique([organizationId, returnNumber])
+  @@index([organizationId])
+  @@index([supplierId])
+  @@index([status])
+  @@map("supplier_returns")
+}
+
+model SupplierReturnLine {
+  id                 String            @id @default(uuid())
+  organizationId     String
+  supplierReturnId   String
+  productVariantId   String
+  goodsReceiptLineId String?
+  returnedQuantity   Decimal           @db.Decimal(10, 2)
+  unitPrice          Decimal           @db.Decimal(12, 2)
+  totalAmount        Decimal           @db.Decimal(14, 2)
+  serialNumbers      String[]          @default([])
+  reason             String?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  organization       Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  supplierReturn     SupplierReturn    @relation(fields: [supplierReturnId], references: [id], onDelete: Cascade)
+  productVariant     ProductVariant    @relation(fields: [productVariantId], references: [id], onDelete: Restrict)
+  goodsReceiptLine   GoodsReceiptLine? @relation(fields: [goodsReceiptLineId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([supplierReturnId])
+  @@index([productVariantId])
+  @@map("supplier_return_lines")
 }

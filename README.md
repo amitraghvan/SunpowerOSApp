@@ -1,16 +1,30 @@
-# SOLAROS ERP
+# SunPowerOS — Solar EPC Enterprise Operating Platform
 
-Enterprise SaaS & ERP platform purpose-built for Solar EPC (Engineering, Procurement, and Construction) companies.
+SunPowerOS (by SunPower Solutions) is an enterprise SaaS ERP platform purpose-built for Solar EPC (Engineering, Procurement, and Construction) companies operating in India.
 
 ## Architecture Highlights
 
-- **Architecture:** Modular Monolith + Monorepo + Domain-Driven Design
-- **Frontend:** Next.js (App Router), React, TypeScript, Tailwind CSS, shadcn/ui design tokens
-- **Backend:** NestJS 10, TypeScript, REST APIs, Swagger/OpenAPI, class-validator
-- **Database:** PostgreSQL with Prisma ORM, UUIDs, Decimal financial types, and multi-tenant RLS foundations
-- **Queues:** Redis & BullMQ
-- **Object Storage:** MinIO / AWS S3 compatible
-- **Package Management:** pnpm workspaces with Turborepo
+- **Architecture:** Modular Monolith + Monorepo + Domain-Driven Design + PostgreSQL Row-Level Security
+- **Frontend:** Next.js 15 (App Router), React 19, TypeScript, Tailwind CSS, Odoo Enterprise visual design system (`--erp-*`)
+- **Public Website:** Product-led SaaS experience with Caveat editorial typography, plum branding (`#714B67`), and self-service registration
+- **Backend:** NestJS 11, TypeScript, REST APIs, Swagger/OpenAPI, class-validator, Argon2id encryption
+- **Database:** PostgreSQL 14 with Prisma ORM, UUID primary keys, Decimal financial types, and engine-level multi-tenant RLS
+- **Queues & Cache:** Redis 7 & BullMQ
+- **Object Storage:** MinIO / AWS S3 compatible (geo-tagged survey photo audits & attachments)
+- **Monorepo:** pnpm workspaces with Turborepo (7 packages)
+
+---
+
+## Capabilities & Phase Breakdown
+
+1. **Phase 0 & 0.5 (Infrastructure & IAM):** Argon2id auth, multi-tenant RLS, role-based access control (RBAC), organization & branch switching, audit logging.
+2. **Phase 1 (Commercial & Site Assessment):** CRM opportunity pipeline, Customer 360 multi-site directory, technical site surveys, solar equipment catalog.
+3. **Phase 2 (Solar Engineering & Contracts):** Automated string sizing calculation, 5-point inverter electrical compatibility validation, 6-category BOM generation, dynamic multi-rate GST quotations, EPC contracts, and 4-gate prerequisite sales orders.
+4. **Phase 3 (Procurement & Inward Operations):** Supplier registry, MRP net requirements explosion, RFQs & vendor quotation comparison, versioned purchase orders, goods receipt notes (GRN), inward quality inspection, and panel/inverter serial tracking.
+5. **Master UX & Enterprise ERP Overhaul:**
+   - Public Website: Varied compositions (connected timeline, activity flowchart, compact integration strip, analytics cockpit, consolidated 18-app ecosystem).
+   - Public Pages: `/features`, `/solutions`, `/security`, `/contact`, `/signup`, `/login`.
+   - ERP Application Shell: Compact 58px topbar (`erp-topbar.tsx`), 252px collapsible grouped sidebar (`erp-sidebar.tsx`), standardized data tables, smart buttons, status pipeline ribbons, empty states, and skeleton loaders.
 
 ---
 

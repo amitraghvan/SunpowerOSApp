@@ -51,6 +51,20 @@ const navSections: { section: string; items: NavItem[] }[] = [
     ],
   },
   {
+    section: 'Procurement & Supply Chain (Phase 3)',
+    items: [
+      { label: 'Procurement Cockpit', href: '/procurement', icon: BarChart3 },
+      { label: 'Suppliers & Vendors', href: '/suppliers', icon: Users },
+      { label: 'Material Planning (MRP)', href: '/procurement/requirements', icon: Boxes },
+      { label: 'Purchase Requisitions', href: '/procurement/requisitions', icon: ClipboardList },
+      { label: 'RFQs & Bid Matrix', href: '/procurement/rfqs', icon: Receipt },
+      { label: 'Purchase Orders', href: '/procurement/purchase-orders', icon: Truck },
+      { label: 'Goods Receipts (GRN)', href: '/procurement/grns', icon: ShieldCheck },
+      { label: 'Serial Traceability', href: '/procurement/serials', icon: Key },
+      { label: 'Supplier Returns', href: '/procurement/returns', icon: History },
+    ],
+  },
+  {
     section: 'Operations & Execution',
     items: [
       { label: 'Projects', href: '/projects', icon: FolderKanban },

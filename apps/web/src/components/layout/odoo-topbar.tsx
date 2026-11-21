@@ -19,6 +19,8 @@ import {
   ChevronDown,
   Activity,
   History,
+  Truck,
+  Boxes,
 } from 'lucide-react';
 import { ApiClient } from '@/lib/api-client';
 
@@ -86,6 +88,15 @@ export function OdooTopbar() {
     if (pathname.startsWith('/quotations')) return 'Quotations & Pricing';
     if (pathname.startsWith('/contracts')) return 'Legal Contracts';
     if (pathname.startsWith('/sales-orders')) return 'Sales Orders & Handoff';
+    if (pathname.startsWith('/suppliers')) return 'Suppliers & Vendors Master';
+    if (pathname.startsWith('/procurement/requirements')) return 'Material Planning (MRP)';
+    if (pathname.startsWith('/procurement/requisitions')) return 'Purchase Requisitions';
+    if (pathname.startsWith('/procurement/rfqs')) return 'RFQs & Supplier Bids';
+    if (pathname.startsWith('/procurement/purchase-orders')) return 'Purchase Orders';
+    if (pathname.startsWith('/procurement/grns')) return 'Goods Receipts & Inspection';
+    if (pathname.startsWith('/procurement/serials')) return 'Asset Serial Numbers';
+    if (pathname.startsWith('/procurement/returns')) return 'Supplier Rejections & Returns';
+    if (pathname.startsWith('/procurement')) return 'Procurement Cockpit';
     if (pathname.startsWith('/settings')) return 'Settings & IAM';
     if (pathname.startsWith('/projects')) return 'Projects';
     if (pathname.startsWith('/inventory')) return 'Inventory';
@@ -102,8 +113,10 @@ export function OdooTopbar() {
     { name: 'Quotations', href: '/quotations', icon: Layers, color: '#10B981' },
     { name: 'Contracts', href: '/contracts', icon: Shield, color: '#6366F1' },
     { name: 'Sales Orders', href: '/sales-orders', icon: GitBranch, color: '#8B5CF6' },
-    { name: 'Product Catalog', href: '/catalog', icon: Layers, color: '#219EBC' },
-    { name: 'Settings & IAM', href: '/settings', icon: Settings, color: '#714B67' },
+    { name: 'Procurement', href: '/procurement', icon: Truck, color: '#714B67' },
+    { name: 'Suppliers', href: '/suppliers', icon: Users, color: '#D97706' },
+    { name: 'Product Catalog', href: '/catalog', icon: Boxes, color: '#219EBC' },
+    { name: 'Settings & IAM', href: '/settings', icon: Settings, color: '#4A5568' },
   ];
 
   return (
@@ -156,7 +169,7 @@ export function OdooTopbar() {
         <div className="flex items-center gap-2">
           <Link href="/dashboard" className="flex items-center gap-1.5 font-bold text-sm tracking-tight hover:opacity-90">
             <Sun className="w-4 h-4 text-amber-300" />
-            <span>SolarOS</span>
+            <span>SunPowerOS</span>
           </Link>
           <span className="text-white/40">/</span>
           <span className="text-xs font-medium text-white/95">{getAppName()}</span>

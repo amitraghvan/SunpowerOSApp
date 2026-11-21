@@ -1,0 +1,350 @@
+/* ==============================================================================
+   SUNPOWEROS PUBLIC MARKETING DESIGN SYSTEM
+   Odoo-Inspired SaaS Aesthetic · Editorial Handwritten Typography · Plum CTAs
+============================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  /* ======================================
+     SUNPOWEROS PUBLIC BRAND
+  ====================================== */
+  --sp-brand-plum: #714B67;
+  --sp-brand-plum-hover: #624159;
+  --sp-brand-plum-soft: #F1EAF0;
+
+  /* ======================================
+     EDITORIAL ACCENTS
+  ====================================== */
+  --sp-accent-coral: #FF747C;
+  --sp-accent-teal: #06C6AE;
+  --sp-accent-amber: #FFB32C;
+  --sp-accent-sky: #36B9F6;
+
+  /* ======================================
+     TEXT
+  ====================================== */
+  --sp-ink: #151A2B;
+  --sp-text-primary: #202536;
+  --sp-text-body: #475065;
+  --sp-text-muted: #737B8B;
+  --sp-text-inverse: #FFFFFF;
+
+  /* ======================================
+     SURFACES
+  ====================================== */
+  --sp-page: #FFFFFF;
+  --sp-surface: #FFFFFF;
+  --sp-surface-soft: #F4F4F6;
+  --sp-surface-muted: #F8F8FA;
+  --sp-surface-dark: #242531;
+
+  /* ======================================
+     BORDERS AND SHADOWS
+  ====================================== */
+  --sp-border: #E4E5E9;
+  --sp-border-strong: #D7D9E0;
+  --sp-shadow-card: 0 8px 28px rgba(21, 26, 43, 0.055);
+  --sp-shadow-product: 0 24px 70px rgba(21, 26, 43, 0.10);
+  --sp-shadow-button: 0 4px 12px rgba(113, 75, 103, 0.18);
+
+  /* ======================================
+     RADIUS
+  ====================================== */
+  --sp-radius-sm: 6px;
+  --sp-radius-md: 10px;
+  --sp-radius-lg: 16px;
+  --sp-radius-xl: 22px;
+  --sp-radius-pill: 999px;
+
+  /* ======================================
+     LAYOUT
+  ====================================== */
+  --sp-container: 1280px;
+  --sp-container-narrow: 1080px;
+  --sp-navbar-height: 74px;
+
+  /* ======================================
+     TYPOGRAPHY
+  ====================================== */
+  --sp-font-display: "Caveat", cursive, sans-serif;
+  --sp-font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+  --sp-text-hero: clamp(3.2rem, 6.5vw, 5.5rem);
+  --sp-text-section: clamp(2.8rem, 5vw, 4.25rem);
+  --sp-text-subsection: clamp(1.65rem, 3vw, 2.1rem);
+  --sp-text-body-clamp: clamp(1rem, 1.3vw, 1.2rem);
+  --sp-text-small: 0.875rem;
+}
+
+/* Base Marketing Page Scoping */
+.marketing-root {
+  color: var(--sp-text-body);
+  background-color: var(--sp-page);
+  font-family: var(--sp-font-body);
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-display {
+  font-family: var(--sp-font-display);
+}
+
+.font-body {
+  font-family: var(--sp-font-body);
+}
+
+/* ======================================
+   BUTTONS
+====================================== */
+.btn-primary {
+  min-height: 52px;
+  padding: 0 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #FFFFFF;
+  background: var(--sp-brand-plum);
+  border: 1px solid var(--sp-brand-plum);
+  border-radius: 9px;
+  font: 600 16px/1 var(--sp-font-body);
+  box-shadow: var(--sp-shadow-button);
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 180ms ease, border-color 180ms ease, transform 180ms ease;
+}
+
+.btn-primary:hover {
+  background: var(--sp-brand-plum-hover);
+  border-color: var(--sp-brand-plum-hover);
+  transform: translateY(-1px);
+  color: #FFFFFF;
+}
+
+.btn-secondary {
+  min-height: 52px;
+  padding: 0 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--sp-brand-plum);
+  background: var(--sp-surface-soft);
+  border: 1px solid transparent;
+  border-radius: 9px;
+  font: 600 16px/1 var(--sp-font-body);
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 180ms ease, transform 180ms ease;
+}
+
+.btn-secondary:hover {
+  background: var(--sp-brand-plum-soft);
+  transform: translateY(-1px);
+}
+
+.btn-tertiary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--sp-brand-plum);
+  font: 600 15px/1.4 var(--sp-font-body);
+  text-decoration: none;
+  transition: color 150ms ease, gap 150ms ease;
+}
+
+.btn-tertiary:hover {
+  color: var(--sp-brand-plum-hover);
+  gap: 9px;
+}
+
+/* ======================================
+   PRODUCT WINDOW BROWSER FRAME
+====================================== */
+.product-window {
+  overflow: hidden;
+  background: #FFFFFF;
+  border: 1px solid var(--sp-border);
+  border-radius: 18px;
+  box-shadow: var(--sp-shadow-product);
+  transition: transform 250ms ease, box-shadow 250ms ease;
+}
+
+.product-window__toolbar {
+  min-height: 42px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #FBFBFC;
+  border-bottom: 1px solid var(--sp-border);
+}
+
+.product-window__body {
+  padding: 16px;
+  background: #FFFFFF;
+}
+
+.product-window__caption {
+  padding: 10px 14px;
+  color: var(--sp-text-muted);
+  font: 500 12px var(--sp-font-body);
+  background: #FBFBFC;
+  border-top: 1px solid var(--sp-border);
+}
+
+/* ======================================
+   FEATURE STORY PATTERN
+====================================== */
+.feature-story {
+  width: min(100% - 48px, var(--sp-container));
+  margin-inline: auto;
+  padding-block: 100px;
+  display: grid;
+  grid-template-columns: minmax(0, 0.88fr) minmax(0, 1.12fr);
+  align-items: center;
+  gap: 72px;
+}
+
+.feature-story--reverse {
+  grid-template-columns: minmax(0, 1.12fr) minmax(0, 0.88fr);
+}
+
+.feature-story__content {
+  max-width: 500px;
+}
+
+.feature-story__eyebrow {
+  color: var(--sp-brand-plum);
+  font: 600 13px/1.4 var(--sp-font-body);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.feature-story__heading {
+  margin-top: 14px;
+  color: var(--sp-ink);
+  font: 700 var(--sp-text-section)/1.04 var(--sp-font-display);
+}
+
+.feature-story__description {
+  margin-top: 18px;
+  color: var(--sp-text-body);
+  font: 400 17px/1.7 var(--sp-font-body);
+}
+
+.feature-story__visual {
+  min-width: 0;
+}
+
+/* ======================================
+   CRM PREVIEW CARDS
+====================================== */
+.crm-preview-card {
+  background: #FFFFFF;
+  border: 1px solid #E4E5E9;
+  border-radius: 10px;
+  padding: 14px 15px;
+  box-shadow: 0 3px 10px rgba(21, 26, 43, 0.035);
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.crm-preview-card:hover {
+  border-color: #D7C5D3;
+  box-shadow: 0 10px 24px rgba(21, 26, 43, 0.07);
+  transform: translateY(-2px);
+}
+
+/* ======================================
+   FEATURE CARDS
+====================================== */
+.marketing-feature-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 170px;
+  padding: 28px;
+  background: #FFFFFF;
+  border: 1px solid var(--sp-border);
+  border-radius: 16px;
+  box-shadow: 0 3px 14px rgba(21, 26, 43, 0.025);
+  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.marketing-feature-card:hover {
+  border-color: #D3C2D0;
+  box-shadow: var(--sp-shadow-card);
+  transform: translateY(-2px);
+}
+
+.marketing-feature-card__icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  color: var(--sp-brand-plum);
+  background: var(--sp-brand-plum-soft);
+  border-radius: 11px;
+}
+
+.marketing-feature-card__title {
+  color: var(--sp-ink);
+  font: 600 21px/1.3 var(--sp-font-body);
+}
+
+.marketing-feature-card__description {
+  color: var(--sp-text-body);
+  font: 400 15px/1.65 var(--sp-font-body);
+}
+
+/* ======================================
+   APP ECOSYSTEM CARDS
+====================================== */
+.marketing-app-card {
+  background: #FFFFFF;
+  border: 1px solid var(--sp-border);
+  border-radius: 14px;
+  padding: 22px;
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.marketing-app-card:hover {
+  border-color: #D3C2D0;
+  box-shadow: 0 8px 24px rgba(21, 26, 43, 0.06);
+  transform: translateY(-2px);
+}
+
+/* ======================================
+   RESPONSIVE OVERRIDES
+====================================== */
+@media (max-width: 1024px) {
+  .feature-story,
+  .feature-story--reverse {
+    grid-template-columns: 1fr;
+    gap: 44px;
+    padding-block: 76px;
+  }
+
+  .feature-story__content {
+    max-width: 700px;
+  }
+}
+
+@media (max-width: 768px) {
+  .feature-story,
+  .feature-story--reverse {
+    width: calc(100% - 36px);
+    gap: 32px;
+    padding-block: 60px;
+  }
+
+  .feature-story__heading {
+    font-size: clamp(2.3rem, 8vw, 3.2rem);
+  }
+
+  .feature-story__description {
+    font-size: 16px;
+  }
+}

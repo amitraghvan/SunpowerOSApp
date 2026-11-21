@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+@import './marketing.css';
+@import './erp.css';
+
 :root {
   --background: #F6F6F6;
   --foreground: #212529;

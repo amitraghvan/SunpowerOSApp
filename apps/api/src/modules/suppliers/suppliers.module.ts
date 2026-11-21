@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common';
+import { SuppliersController } from './suppliers.controller';
+import { SuppliersService } from './suppliers.service';
+import { DatabaseModule } from '../../database/database.module';
+import { NumberingService } from '../../common/services/numbering.service';
 
-/**
- * Suppliers Domain Module (Supply Chain)
- * OEM manufacturers, equipment vendors, and solar distributor directories
- */
 @Module({
-  controllers: [],
-  providers: [],
-  exports: [],
+  imports: [DatabaseModule],
+  controllers: [SuppliersController],
+  providers: [SuppliersService, NumberingService],
+  exports: [SuppliersService],
 })
 export class SuppliersModule {}

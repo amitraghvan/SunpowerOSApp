@@ -313,6 +313,36 @@ export class ApiClient {
   // ---------------------------------------------------------------------------
   // Authentication & Identity
   // ---------------------------------------------------------------------------
+  static async register(data: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    password: string;
+    phone?: string;
+    country?: string;
+    organizationName: string;
+    organizationSlug?: string;
+    businessCategory?: string;
+    city?: string;
+    state?: string;
+    timezone?: string;
+    currency?: string;
+    termsAccepted: boolean;
+    privacyAccepted: boolean;
+  }) {
+    const res = await this.request<any>('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    if (res.sessionToken) {
+      this.setSessionToken(res.sessionToken);
+    }
+    if (res.activeOrganization?.id) {
+      this.setOrganizationId(res.activeOrganization.id);
+    }
+    return res;
+  }
+
   static async login(data: { email: string; password?: string; organizationSlug?: string; rememberMe?: boolean }) {
     const res = await this.request<any>('/auth/login', {
       method: 'POST',
@@ -630,6 +660,291 @@ export class ApiClient {
 
   static async confirmSalesOrder(id: string, data: any) {
     return this.request<any>(`/sales-orders/${id}/confirm`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // ===========================================================================
+  // Phase 3: Suppliers, Vendor Product Catalog & Pricing
+  // ===========================================================================
+  static async getSuppliers(params?: Record<string, any>) {
+    const query = params ? `?${new URLSearchParams(params).toString()}` : '';
+    return this.request<any[]>(`/suppliers${query}`);
+  }
+
+  static async getSupplierById(id: string) {
+    return this.request<any>(`/suppliers/${id}`);
+  }
+
+  static async createSupplier(data: any) {
+    return this.request<any>('/suppliers', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async updateSupplier(id: string, data: any) {
+    return this.request<any>(`/suppliers/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async addSupplierContact(supplierId: string, data: any) {
+    return this.request<any>(`/suppliers/${supplierId}/contacts`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async addSupplierAddress(supplierId: string, data: any) {
+    return this.request<any>(`/suppliers/${supplierId}/addresses`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async addSupplierBankAccount(supplierId: string, data: any) {
+    return this.request<any>(`/suppliers/${supplierId}/bank-accounts`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async addSupplierDocument(supplierId: string, data: any) {
+    return this.request<any>(`/suppliers/${supplierId}/documents`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async createSupplierProductMapping(supplierId: string, data: any) {
+    return this.request<any>(`/suppliers/${supplierId}/product-mappings`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async getSupplierPriceHistory(params?: Record<string, any>) {
+    const query = params ? `?${new URLSearchParams(params).toString()}` : '';
+    return this.request<any[]>(`/suppliers/price-history${query}`);
+  }
+
+  // ===========================================================================
+  // Phase 3: Procurement, MRP, Requisitions, RFQs & Purchase Orders
+  // ===========================================================================
+  static async getProcurementKPIs() {
+    return this.request<any>('/procurement/analytics/kpis');
+  }
+
+  static async getMaterialRequirements(params?: Record<string, any>) {
+    const query = params ? `?${new URLSearchParams(params).toString()}` : '';
+    return this.request<any[]>(`/procurement/mrp${query}`);
+  }
+
+  static async getMaterialRequirementById(id: string) {
+    return this.request<any>(`/procurement/mrp/${id}`);
+  }
+
+  static async generateMRPFromProject(data: any) {
+    return this.request<any>('/procurement/mrp/from-project', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async convertMRPToRequisition(mrpId: string) {
+    return this.request<any>(`/procurement/mrp/${mrpId}/convert-to-pr`, {
+      method: 'POST',
+    });
+  }
+
+  static async getPurchaseRequisitions(params?: Record<string, any>) {
+    const query = params ? `?${new URLSearchParams(params).toString()}` : '';
+    return this.request<any[]>(`/procurement/requisitions${query}`);
+  }
+
+  static async getPurchaseRequisitionById(id: string) {
+    return this.request<any>(`/procurement/requisitions/${id}`);
+  }
+
+  static async createPurchaseRequisition(data: any) {
+    return this.request<any>('/procurement/requisitions', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async submitPurchaseRequisition(id: string) {
+    return this.request<any>(`/procurement/requisitions/${id}/submit`, {
+      method: 'POST',
+    });
+  }
+
+  static async approvePurchaseRequisition(id: string, data: any) {
+    return this.request<any>(`/procurement/requisitions/${id}/approve`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async rejectPurchaseRequisition(id: string, data: any) {
+    return this.request<any>(`/procurement/requisitions/${id}/reject`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async getRFQs(params?: Record<string, any>) {
+    const query = params ? `?${new URLSearchParams(params).toString()}` : '';
+    return this.request<any[]>(`/procurement/rfqs${query}`);
+  }
+
+  static async getRFQById(id: string) {
+    return this.request<any>(`/procurement/rfqs/${id}`);
+  }
+
+  static async createRFQ(data: any) {
+    return this.request<any>('/procurement/rfqs', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async submitSupplierQuotation(rfqId: string, data: any) {
+    return this.request<any>(`/procurement/rfqs/${rfqId}/quotations`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async compareRFQQuotes(rfqId: string) {
+    return this.request<any>(`/procurement/rfqs/${rfqId}/compare`);
+  }
+
+  static async awardRFQ(rfqId: string, data: any) {
+    return this.request<any>(`/procurement/rfqs/${rfqId}/award`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async getPurchaseOrders(params?: Record<string, any>) {
+    const query = params ? `?${new URLSearchParams(params).toString()}` : '';
+    return this.request<any[]>(`/procurement/purchase-orders${query}`);
+  }
+
+  static async getPurchaseOrderById(id: string) {
+    return this.request<any>(`/procurement/purchase-orders/${id}`);
+  }
+
+  static async createPurchaseOrder(data: any) {
+    return this.request<any>('/procurement/purchase-orders', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async approvePurchaseOrder(id: string, data: any) {
+    return this.request<any>(`/procurement/purchase-orders/${id}/approve`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async createPurchaseOrderRevision(id: string, data: any) {
+    return this.request<any>(`/procurement/purchase-orders/${id}/revise`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async createDeliverySchedule(poId: string, data: any) {
+    return this.request<any>(`/procurement/purchase-orders/${poId}/delivery-schedules`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async getDeliverySchedules(poId: string) {
+    return this.request<any[]>(`/procurement/purchase-orders/${poId}/delivery-schedules`);
+  }
+
+  // ===========================================================================
+  // Phase 3: Inward Inventory, GRN, Quality Inspection, Serials & Returns
+  // ===========================================================================
+  static async getInventoryLocations() {
+    return this.request<any[]>('/inventory/locations');
+  }
+
+  static async createInventoryLocation(data: any) {
+    return this.request<any>('/inventory/locations', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async getGoodsReceiptNotes(params?: Record<string, any>) {
+    const query = params ? `?${new URLSearchParams(params).toString()}` : '';
+    return this.request<any[]>(`/inventory/grns${query}`);
+  }
+
+  static async getGoodsReceiptNoteById(id: string) {
+    return this.request<any>(`/inventory/grns/${id}`);
+  }
+
+  static async createGoodsReceiptNote(data: any) {
+    return this.request<any>('/inventory/grns', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async performQualityInspection(data: any) {
+    return this.request<any>('/inventory/inspections', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async getQualityInspections(params?: Record<string, any>) {
+    const query = params ? `?${new URLSearchParams(params).toString()}` : '';
+    return this.request<any[]>(`/inventory/inspections${query}`);
+  }
+
+  static async registerProductSerials(data: any) {
+    return this.request<any>('/inventory/serials', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async getProductSerials(params?: Record<string, any>) {
+    const query = params ? `?${new URLSearchParams(params).toString()}` : '';
+    return this.request<any[]>(`/inventory/serials${query}`);
+  }
+
+  static async getProductSerialById(id: string) {
+    return this.request<any>(`/inventory/serials/${id}`);
+  }
+
+  static async getInventoryMovements(params?: Record<string, any>) {
+    const query = params ? `?${new URLSearchParams(params).toString()}` : '';
+    return this.request<any[]>(`/inventory/movements${query}`);
+  }
+
+  static async getSupplierReturns(params?: Record<string, any>) {
+    const query = params ? `?${new URLSearchParams(params).toString()}` : '';
+    return this.request<any[]>(`/inventory/returns${query}`);
+  }
+
+  static async getSupplierReturnById(id: string) {
+    return this.request<any>(`/inventory/returns/${id}`);
+  }
+
+  static async createSupplierReturn(data: any) {
+    return this.request<any>('/inventory/returns', {
       method: 'POST',
       body: JSON.stringify(data),
     });
