@@ -302,4 +302,64 @@ export class PlatformOrganizationsService {
 
     return subscription;
   }
+
+  async listUsers(query: { page?: number; limit?: number; search?: string; status?: string }) {
+    const page = Math.max(1, Number(query.page) || 1);
+    const limit = Math.min(100, Math.max(1, Number(query.limit) || 20));
+    const skip = (page - 1) * limit;
+
+    const where: any = {};
+    if (query.status && query.status !== 'ALL') {
+      where.status = query.status;
+    }
+    if (query.search) {
+      const term = query.search.trim();
+      where.OR = [
+        { email: { contains: term, mode: 'insensitive' } },
+        { firstName: { contains: term, mode: 'insensitive' } },
+        { lastName: { contains: term, mode: 'insensitive' } },
+      ];
+    }
+
+    const [items, total] = await Promise.all([
+      this.prisma.user.findMany({
+        where,
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          phone: true,
+          status: true,
+          isActive: true,
+          isSuperAdmin: true,
+          lastLoginAt: true,
+          createdAt: true,
+          memberships: {
+            where: { isActive: true, deletedAt: null },
+            select: {
+              organization: { select: { id: true, name: true, slug: true } },
+              branch: { select: { id: true, name: true } },
+              roles: { select: { role: { select: { code: true, name: true } } } },
+            },
+          },
+          platformAdministrator: {
+            select: { id: true, role: true, isActive: true },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.user.count({ where }),
+    ]);
+
+    return {
+      items,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
 }

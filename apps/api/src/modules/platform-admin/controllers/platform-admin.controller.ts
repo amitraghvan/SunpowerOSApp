@@ -76,6 +76,16 @@ export class PlatformAdminController {
     return await this.organizationsService.getOrganizationDetail(orgId);
   }
 
+  @Get('users')
+  async listUsers(
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+    @Query('search') search?: string,
+    @Query('status') status?: string,
+  ) {
+    return await this.organizationsService.listUsers({ page, limit, search, status });
+  }
+
   @Post('organizations/:id/suspend')
   @RequirePlatformRoles(PlatformRole.PLATFORM_OWNER, PlatformRole.PLATFORM_ADMIN)
   async suspendOrganization(

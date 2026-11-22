@@ -8,10 +8,13 @@
     "node": ">=20.0.0"
   },
   "scripts": {
-    "build": "tsc -p packages/types/tsconfig.json && tsc -p packages/contracts/tsconfig.json && tsc -p packages/config/tsconfig.json && tsc -p packages/ui/tsconfig.json && tsc -p database/tsconfig.json && tsc -p apps/api/tsconfig.json && (cd apps/web && ./node_modules/.bin/next build)",
+    "build": "tsc -p packages/types/tsconfig.json && tsc -p packages/contracts/tsconfig.json && tsc -p packages/config/tsconfig.json && tsc -p packages/ui/tsconfig.json && tsc -p database/tsconfig.json && tsc -p apps/api/tsconfig.json && (cd apps/web && ./node_modules/.bin/next build) && (cd apps/platform-admin && ./node_modules/.bin/next build)",
     "dev": "turbo run dev",
+    "dev:web": "pnpm --filter @solaros/web dev",
+    "dev:platform-admin": "pnpm --filter @solaros/platform-admin dev",
+    "dev:api": "pnpm --filter @solaros/api dev",
     "lint": "prettier --check \"**/*.{ts,tsx,js,json,md}\"",
-    "check-types": "tsc -p packages/types/tsconfig.json --noEmit && tsc -p packages/contracts/tsconfig.json --noEmit && tsc -p packages/config/tsconfig.json --noEmit && tsc -p packages/ui/tsconfig.json --noEmit && tsc -p database/tsconfig.json --noEmit && tsc -p apps/api/tsconfig.json --noEmit && tsc -p apps/web/tsconfig.json --noEmit",
+    "check-types": "tsc -p packages/types/tsconfig.json --noEmit && tsc -p packages/contracts/tsconfig.json --noEmit && tsc -p packages/config/tsconfig.json --noEmit && tsc -p packages/ui/tsconfig.json --noEmit && tsc -p database/tsconfig.json --noEmit && tsc -p apps/api/tsconfig.json --noEmit && tsc -p apps/web/tsconfig.json --noEmit && tsc -p apps/platform-admin/tsconfig.json --noEmit",
     "test": "node apps/api/node_modules/jest/bin/jest.js --config=jest.config.js --runInBand",
     "test:e2e": "playwright test",
     "clean": "rm -rf node_modules dist .turbo .next",

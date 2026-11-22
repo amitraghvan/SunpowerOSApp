@@ -22,12 +22,32 @@ async function bootstrap() {
   // Global Correlation ID
   app.use(new CorrelationIdMiddleware().use);
 
-  // CORS configuration
+  // CORS configuration for dual frontends: Existing Web (3000) & Platform Admin (3001)
+  const allowedOrigins = process.env.CORS_ORIGIN
+    ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim())
+    : ['http://localhost:3000', 'http://localhost:3001'];
+
   app.enableCors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+    origin: (
+      origin: string | undefined,
+      callback: (err: Error | null, allow?: boolean) => void,
+    ) => {
+      // allow requests with no origin (like mobile apps, curl, or internal micro-calls)
+      if (!origin || allowedOrigins.includes(origin) || /^http:\/\/localhost:(3000|3001)$/.test(origin)) {
+        callback(null, true);
+      } else {
+        callback(null, false);
+      }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', API_CONSTANTS.CORRELATION_ID_HEADER, API_CONSTANTS.TENANT_ID_HEADER, API_CONSTANTS.BRANCH_ID_HEADER],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      API_CONSTANTS.CORRELATION_ID_HEADER,
+      API_CONSTANTS.TENANT_ID_HEADER,
+      API_CONSTANTS.BRANCH_ID_HEADER,
+    ],
   });
 
   // Global API Prefix

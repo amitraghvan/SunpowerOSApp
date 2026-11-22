@@ -1701,6 +1701,11 @@ export class ApiClient {
     return this.request<any>(`/platform-admin/organizations${query}`);
   }
 
+  static async getPlatformUsers(params?: Record<string, any>) {
+    const query = params ? `?${new URLSearchParams(params).toString()}` : '';
+    return this.request<any>(`/platform-admin/users${query}`);
+  }
+
   static async getPlatformOrganizationDetail(id: string) {
     return this.request<any>(`/platform-admin/organizations/${id}`);
   }
