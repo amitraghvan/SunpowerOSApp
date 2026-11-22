@@ -3,12 +3,13 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ApiClient } from '@/lib/api-client';
-import { Shield, Lock, Mail, ArrowRight, AlertCircle, Loader2, ExternalLink } from 'lucide-react';
+import { Shield, Lock, Mail, ArrowRight, AlertCircle, Loader2, Eye, EyeOff, ExternalLink } from 'lucide-react';
 
 export default function PlatformAdminLoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('superadmin@sunpowersolutions.in');
-  const [password, setPassword] = useState('SuperAdmin123!');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -21,7 +22,7 @@ export default function PlatformAdminLoginPage() {
     setErrorMessage('');
 
     try {
-      const res = await ApiClient.login({ email, password });
+      const res = await ApiClient.login({ email: email.trim(), password });
       if (res?.accessToken) {
         router.push('/overview');
       } else {
@@ -29,7 +30,7 @@ export default function PlatformAdminLoginPage() {
       }
     } catch (err: any) {
       setErrorMessage(
-        err.message || 'Authentication failed. Please verify platform administrator credentials.',
+        err.message || 'Authentication failed. Please check your credentials.',
       );
     } finally {
       setLoading(false);
@@ -37,15 +38,16 @@ export default function PlatformAdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#1F1924] flex items-center justify-center p-4 selection:bg-[#714B67] selection:text-white">
-      <div className="w-full max-w-md bg-white rounded-3xl p-8 sm:p-10 shadow-2xl border border-white/10">
+    <div className="min-h-screen bg-[#F8F9FA] flex items-center justify-center p-4 selection:bg-[#714B67] selection:text-white">
+      <div className="w-full max-w-md bg-white rounded-3xl p-8 sm:p-10 shadow-xl border border-[#DEE2E6]">
+        {/* Logo and Header */}
         <div className="text-center mb-8">
           <div className="w-14 h-14 rounded-2xl bg-[#F1EAF0] text-[#714B67] flex items-center justify-center mx-auto mb-4 border border-[#714B67]/20 shadow-xs">
             <Shield className="w-7 h-7" />
           </div>
-          <h1 className="text-2xl font-bold text-[#151A2B]">Platform Control Center</h1>
-          <p className="text-xs text-[#737B8B] mt-1.5">
-            SunPower Solutions — Master SaaS Administrative Gateway (Port 3001)
+          <h1 className="text-2xl font-bold text-[#151A2B] tracking-tight">Platform Control Center</h1>
+          <p className="text-xs text-[#6C757D] mt-1.5">
+            SunPower Solutions — Administrative Sign In
           </p>
         </div>
 
@@ -59,7 +61,7 @@ export default function PlatformAdminLoginPage() {
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
             <label className="block text-xs font-semibold text-[#151A2B] mb-1.5">
-              Platform Admin Email
+              Email Address
             </label>
             <div className="relative">
               <Mail className="w-4 h-4 text-[#8A92A6] absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -68,26 +70,34 @@ export default function PlatformAdminLoginPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-[#E4E5E9] text-sm focus:outline-none focus:ring-2 focus:ring-[#714B67]"
-                placeholder="superadmin@sunpowersolutions.in"
+                className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-[#DEE2E6] text-xs focus:outline-none focus:ring-2 focus:ring-[#714B67]"
+                placeholder="admin@sunpowersolutions.in"
               />
             </div>
           </div>
 
           <div>
             <label className="block text-xs font-semibold text-[#151A2B] mb-1.5">
-              Secure Password
+              Password
             </label>
             <div className="relative">
               <Lock className="w-4 h-4 text-[#8A92A6] absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-[#E4E5E9] text-sm focus:outline-none focus:ring-2 focus:ring-[#714B67]"
+                className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-[#DEE2E6] text-xs focus:outline-none focus:ring-2 focus:ring-[#714B67]"
                 placeholder="••••••••••••"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#8A92A6] hover:text-[#151A2B] transition-colors"
+                title={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
             </div>
           </div>
 
@@ -95,16 +105,16 @@ export default function PlatformAdminLoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 rounded-xl bg-[#714B67] hover:bg-[#5A3750] text-white font-semibold text-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-60 shadow-sm"
+              className="w-full py-3 rounded-xl bg-[#714B67] hover:bg-[#5A3750] text-white font-semibold text-xs flex items-center justify-center gap-2 transition-colors disabled:opacity-60 shadow-xs"
             >
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Authenticating...</span>
+                  <span>Signing In...</span>
                 </>
               ) : (
                 <>
-                  <span>Sign In as Platform Administrator</span>
+                  <span>Sign In</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
@@ -112,21 +122,18 @@ export default function PlatformAdminLoginPage() {
           </div>
         </form>
 
-        <div className="mt-8 pt-6 border-t border-[#E4E5E9] text-center space-y-3">
-          <div className="text-[11px] text-[#737B8B] flex items-center justify-center gap-1">
-            <span>Customer organization members:</span>
+        <div className="mt-8 pt-6 border-t border-[#DEE2E6] text-center space-y-3">
+          <div className="text-[11px] text-[#6C757D] flex items-center justify-center gap-1.5">
+            <span>Customer organization user?</span>
             <a
               href={`${existingWebUrl}/login`}
               target="_blank"
               rel="noreferrer"
               className="text-[#714B67] font-semibold hover:underline inline-flex items-center gap-0.5"
             >
-              <span>Customer ERP Portal (:3000)</span>
+              <span>Go to Customer ERP</span>
               <ExternalLink className="w-3 h-3" />
             </a>
-          </div>
-          <div className="text-[10px] text-[#8A92A6]">
-            Strict Audit Logging & Multi-Tenant Isolation Enforced
           </div>
         </div>
       </div>

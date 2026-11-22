@@ -11,27 +11,62 @@ export class ApiClient {
 
   static setOrganizationId(orgId: string) {
     this.organizationId = orgId;
+    if (typeof window !== 'undefined') {
+      if (orgId) {
+        localStorage.setItem('solaros_organization_id', orgId);
+      } else {
+        localStorage.removeItem('solaros_organization_id');
+      }
+    }
   }
 
   static getOrganizationId(): string {
-    return this.organizationId;
+    if (this.organizationId && this.organizationId !== DEFAULT_TENANT_ID) {
+      return this.organizationId;
+    }
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('solaros_organization_id');
+      if (stored) {
+        this.organizationId = stored;
+        return stored;
+      }
+    }
+    return this.organizationId || DEFAULT_TENANT_ID;
   }
 
   static setSessionToken(token: string | null) {
     this.sessionToken = token;
+    if (typeof window !== 'undefined') {
+      if (token) {
+        localStorage.setItem('solaros_session_token', token);
+      } else {
+        localStorage.removeItem('solaros_session_token');
+        localStorage.removeItem('solaros_active_user');
+      }
+    }
   }
 
   static getSessionToken(): string | null {
+    if (this.sessionToken) return this.sessionToken;
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('solaros_session_token');
+      if (stored) {
+        this.sessionToken = stored;
+        return stored;
+      }
+    }
     return this.sessionToken;
   }
 
   private static async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
+    const token = this.getSessionToken();
+    const activeOrgId = this.getOrganizationId();
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      [API_CONSTANTS.TENANT_ID_HEADER]: this.organizationId,
-      ...(this.sessionToken ? { Authorization: `Bearer ${this.sessionToken}` } : {}),
+      [API_CONSTANTS.TENANT_ID_HEADER]: activeOrgId,
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(options.headers as Record<string, string> || {}),
     };
 
@@ -362,6 +397,12 @@ export class ApiClient {
       await this.request<any>('/auth/logout', { method: 'POST' });
     } finally {
       this.setSessionToken(null);
+      this.setOrganizationId(DEFAULT_TENANT_ID);
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('solaros_organization_id');
+        localStorage.removeItem('solaros_session_token');
+        localStorage.removeItem('solaros_active_user');
+      }
     }
   }
 

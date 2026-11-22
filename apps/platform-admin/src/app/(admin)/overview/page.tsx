@@ -50,10 +50,10 @@ export default function PlatformOverviewPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-xl md:text-2xl font-bold text-[#151A2B] tracking-tight">
-            Platform Operations Overview
+            Platform Overview
           </h1>
           <p className="text-xs text-[#737B8B] mt-0.5">
-            Cross-tenant SaaS monitoring, growth analytics and enterprise resources
+            Real-time SaaS operational metrics and system activity
           </p>
         </div>
 

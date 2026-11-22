@@ -22,8 +22,8 @@ import {
 } from 'lucide-react';
 
 export default function DashboardPage() {
-  const [userName, setUserName] = useState<string>('Solar Professional');
-  const [activeOrgName, setActiveOrgName] = useState<string>('Your Organization');
+  const [userName, setUserName] = useState<string>('');
+  const [activeOrgName, setActiveOrgName] = useState<string>('Loading Workspace...');
 
   const [isLoading, setIsLoading] = useState(true);
   const [activeQueueTab, setActiveQueueTab] = useState<'surveys' | 'quotes' | 'orders'>('surveys');
@@ -135,7 +135,11 @@ export default function DashboardPage() {
             <span>Workspace: {activeOrgName}</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold text-[#151A2B] tracking-tight">
-            Welcome back, {userName}.
+            {userName ? (
+              `Welcome back, ${userName}.`
+            ) : (
+              <span className="inline-block w-64 h-8 bg-[#E4E5E9] rounded-lg animate-pulse align-middle" />
+            )}
           </h1>
           <p className="text-sm text-[#737B8B] mt-1">
             Here is your solar business activity and pending operations for today.

@@ -46,14 +46,86 @@ export class PlatformOrganizationsService {
       where.subscription = { planId: query.planId };
     }
 
-    const [items, total] = await Promise.all([
-      this.prisma.organization.findMany({
-        where,
+    return this.prisma.asSuperAdmin(async (tx) => {
+      const [items, total] = await Promise.all([
+        tx.organization.findMany({
+          where,
+          include: {
+            subscription: {
+              include: {
+                plan: true,
+              },
+            },
+            _count: {
+              select: {
+                memberships: true,
+                branches: true,
+                customers: true,
+                leads: true,
+                supportTickets: true,
+              },
+            },
+          },
+          orderBy: { createdAt: 'desc' },
+          skip,
+          take: limit,
+        }),
+        tx.organization.count({ where }),
+      ]);
+
+      return {
+        items,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      };
+    });
+  }
+
+  async getOrganizationDetail(orgId: string) {
+    return this.prisma.asSuperAdmin(async (tx) => {
+      const org = await tx.organization.findUnique({
+        where: { id: orgId },
         include: {
           subscription: {
             include: {
               plan: true,
             },
+          },
+          branches: {
+            orderBy: { createdAt: 'asc' },
+          },
+          memberships: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  email: true,
+                  firstName: true,
+                  lastName: true,
+                  phone: true,
+                  status: true,
+                  lastLoginAt: true,
+                },
+              },
+              branch: {
+                select: { id: true, name: true, code: true },
+              },
+              roles: {
+                include: { role: true },
+              },
+            },
+            orderBy: { createdAt: 'desc' },
+          },
+          supportTickets: {
+            include: {
+              submittedBy: {
+                select: { id: true, firstName: true, lastName: true, email: true },
+              },
+            },
+            orderBy: { createdAt: 'desc' },
+            take: 5,
           },
           _count: {
             select: {
@@ -61,119 +133,51 @@ export class PlatformOrganizationsService {
               branches: true,
               customers: true,
               leads: true,
+              quotations: true,
+              contracts: true,
+              salesOrders: true,
               supportTickets: true,
             },
           },
         },
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limit,
-      }),
-      this.prisma.organization.count({ where }),
-    ]);
+      });
 
-    return {
-      items,
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
-    };
-  }
+      if (!org) {
+        throw new NotFoundException(`Organization with id "${orgId}" not found.`);
+      }
 
-  async getOrganizationDetail(orgId: string) {
-    const org = await this.prisma.organization.findUnique({
-      where: { id: orgId },
-      include: {
-        subscription: {
-          include: {
-            plan: true,
-          },
-        },
-        branches: {
-          orderBy: { createdAt: 'asc' },
-        },
-        memberships: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                email: true,
-                firstName: true,
-                lastName: true,
-                phone: true,
-                status: true,
-                lastLoginAt: true,
-              },
-            },
-            branch: {
-              select: { id: true, name: true, code: true },
-            },
-            roles: {
-              include: { role: true },
-            },
+      // Aggregate storage consumption
+      const [supplierDocs, handoverDocs, auditHistory] = await Promise.all([
+        tx.supplierDocument.aggregate({
+          where: { organizationId: orgId },
+          _sum: { fileSizeBytes: true },
+        }),
+        tx.handoverDocument.aggregate({
+          where: { organizationId: orgId },
+          _sum: { fileSize: true },
+        }),
+        tx.platformAuditEvent.findMany({
+          where: {
+            targetType: 'ORGANIZATION',
+            targetId: orgId,
           },
           orderBy: { createdAt: 'desc' },
+          take: 10,
+        }),
+      ]);
+
+      const totalStorageBytes =
+        Number(supplierDocs._sum?.fileSizeBytes || 0) + Number(handoverDocs._sum?.fileSize || 0);
+
+      return {
+        organization: org,
+        storage: {
+          totalBytes: totalStorageBytes,
+          totalMb: Math.round(totalStorageBytes / (1024 * 1024)),
         },
-        supportTickets: {
-          include: {
-            submittedBy: {
-              select: { id: true, firstName: true, lastName: true, email: true },
-            },
-          },
-          orderBy: { createdAt: 'desc' },
-          take: 5,
-        },
-        _count: {
-          select: {
-            memberships: true,
-            branches: true,
-            customers: true,
-            leads: true,
-            quotations: true,
-            contracts: true,
-            salesOrders: true,
-            supportTickets: true,
-          },
-        },
-      },
+        auditHistory,
+      };
     });
-
-    if (!org) {
-      throw new NotFoundException(`Organization with id "${orgId}" not found.`);
-    }
-
-    // Aggregate storage consumption
-    const [supplierDocs, handoverDocs, auditHistory] = await Promise.all([
-      this.prisma.supplierDocument.aggregate({
-        where: { organizationId: orgId },
-        _sum: { fileSizeBytes: true },
-      }),
-      this.prisma.handoverDocument.aggregate({
-        where: { organizationId: orgId },
-        _sum: { fileSize: true },
-      }),
-      this.prisma.platformAuditEvent.findMany({
-        where: {
-          targetType: 'ORGANIZATION',
-          targetId: orgId,
-        },
-        orderBy: { createdAt: 'desc' },
-        take: 10,
-      }),
-    ]);
-
-    const totalStorageBytes =
-      Number(supplierDocs._sum?.fileSizeBytes || 0) + Number(handoverDocs._sum?.fileSize || 0);
-
-    return {
-      organization: org,
-      storage: {
-        totalBytes: totalStorageBytes,
-        totalMb: Math.round(totalStorageBytes / (1024 * 1024)),
-      },
-      auditHistory,
-    };
   }
 
   async suspendOrganization(
@@ -321,45 +325,47 @@ export class PlatformOrganizationsService {
       ];
     }
 
-    const [items, total] = await Promise.all([
-      this.prisma.user.findMany({
-        where,
-        select: {
-          id: true,
-          email: true,
-          firstName: true,
-          lastName: true,
-          phone: true,
-          status: true,
-          isActive: true,
-          isSuperAdmin: true,
-          lastLoginAt: true,
-          createdAt: true,
-          memberships: {
-            where: { isActive: true, deletedAt: null },
-            select: {
-              organization: { select: { id: true, name: true, slug: true } },
-              branch: { select: { id: true, name: true } },
-              roles: { select: { role: { select: { code: true, name: true } } } },
+    return this.prisma.asSuperAdmin(async (tx) => {
+      const [items, total] = await Promise.all([
+        tx.user.findMany({
+          where,
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+            phone: true,
+            status: true,
+            isActive: true,
+            isSuperAdmin: true,
+            lastLoginAt: true,
+            createdAt: true,
+            memberships: {
+              where: { isActive: true, deletedAt: null },
+              select: {
+                organization: { select: { id: true, name: true, slug: true } },
+                branch: { select: { id: true, name: true } },
+                roles: { select: { role: { select: { code: true, name: true } } } },
+              },
+            },
+            platformAdministrator: {
+              select: { id: true, role: true, isActive: true },
             },
           },
-          platformAdministrator: {
-            select: { id: true, role: true, isActive: true },
-          },
-        },
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limit,
-      }),
-      this.prisma.user.count({ where }),
-    ]);
+          orderBy: { createdAt: 'desc' },
+          skip,
+          take: limit,
+        }),
+        tx.user.count({ where }),
+      ]);
 
-    return {
-      items,
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
-    };
+      return {
+        items,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      };
+    });
   }
 }

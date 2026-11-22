@@ -21,6 +21,7 @@
     "db:generate": "node database/node_modules/prisma/build/index.js generate --schema=database/prisma/schema.prisma",
     "db:migrate": "node database/node_modules/prisma/build/index.js migrate dev --schema=database/prisma/schema.prisma",
     "db:seed": "node -r ./database/node_modules/ts-node/register database/prisma/seeds/development/seed.ts",
+    "platform:bootstrap-owner": "pnpm --filter @solaros/api platform:bootstrap-owner",
     "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,json,md}\""
   },

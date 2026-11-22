@@ -1,82 +1,49 @@
 # SUNPOWEROS ERP — PROJECT STATUS
 
-**Current Phase:** ALL PHASES 0 THROUGH 5 & MASTER PLATFORM ADMIN CONTROL CENTER COMPLETED & OFFICIALLY VERIFIED  
+**Current Phase:** ALL PHASES 0 THROUGH 5, PLATFORM CONTROL CENTER & QUALITY OVERHAUL COMPLETED & OFFICIALLY VERIFIED  
 **Last Updated:** November 22, 2026  
-**Status:** PHASE 0 CLOSED · PHASE 0.5 CLOSED · PHASE 1 CLOSED · PHASE 2 CLOSED · PHASE 3 CLOSED · PUBLIC PORTAL CLOSED · UX/ERP REDESIGN CLOSED · PHASE 4 CLOSED · PHASE 5 CLOSED · PLATFORM CONTROL CENTER CLOSED · PRODUCTION READY  
-**Technical Lead / Principal Architect:** CTO, Principal Architect & Security Lead
+**Status:** ALL PHASES CLOSED · SEPARATE PLATFORM ADMIN (:3001) · ERP TOPBAR & USER IDENTITY VERIFIED · CROSS-TENANT RLS INTEGRATION ACTIVE · PRODUCTION READY  
+**Technical Lead / Principal Architect:** CTO, Principal SaaS Architect & Security Lead
 
 ---
 
 ## 1. Executive Summary
 
-Phase 5 (**Solar Installation, Project Execution, Testing, Commissioning & Customer Handover**) has been fully implemented, verified, and integrated into the SunPowerOS enterprise ERP:
+The **Master Platform Quality & Integration Overhaul** has been completed:
 
-- **Module 1 — Project Execution Workspace**: 360° installation project cockpit extending `ProjectInitiation` with 12 controlled operational states (`READY_FOR_INSTALLATION` through `COMPLETED`).
-- **Module 2 — Technician & Crew Management**: Multi-skill profiling, certification expiry alerts, crew assembly (`CRW-YYYY-000001`), and conflict-free assignment.
-- **Module 3 — Installation Scheduling**: Multi-visit scheduling (`SCH-YYYY-000001`), overlap prevention, and documented reschedule logging.
-- **Module 4 — Site Readiness Assessment**: 12-point pre-work checklist (`SRR-YYYY-000001`), mandatory gate enforcement, and supervisor exception authorization (`APPROVED_WITH_EXCEPTION`).
-- **Module 5 — Work Orders & Tasks Execution**: Numbered work orders (`IWO-YYYY-000001`), 9 standard solar EPC tasks, and 7 automated milestone completions.
-- **Module 6 — Material Handover & Site Custody**: Physical custody transfer (`MHO-YYYY-000001`) from Phase 4 Dispatch Orders. **ZERO DOUBLE WAREHOUSE STOCK DEDUCTION INVARIANT ENFORCED.** Equipment serials stamped `ALLOCATED` and subsequently `INSTALLED` upon consumption (`CON-YYYY-000001`).
-- **Module 7 & 8 — Daily Safety & HSE Control**: Daily toolbox talk checklists (`SAF-YYYY-000001`), PPE compliance, fall protection verification, near-miss observations, and incident reporting (`INC-YYYY-000001`).
-- **Stop-Work Isolation**: Formal Stop-Work issuance instantly freezes project execution (`ON_HOLD`) until formally resolved and lifted by an authorized supervisor.
-- **Module 9 — Quality Inspection Gates**: 7 stage-gate inspections (`IQI-YYYY-000001`) with mandatory tolerance criteria (torque, tilt, alignment, MC4 pull test, earth pit resistance < 5Ω). Checkpoint failures enforce `REWORK_REQUIRED` and block commissioning.
-- **Module 10 — Testing & Commissioning**: Technical commissioning records (`COM-YYYY-000001`) with Voc, Isc, and 8 standard electrical tests. Mandatory test failure strictly blocks approval with `BadRequestException`. Approval transitions project to `COMMISSIONED` and stamps `commissionedAt` on serials.
-- **Module 11 — DISCOM & Utility Tracking**: Utility connection tracker (`UTL-YYYY-000001`), technical feasibility approvals, bi-directional net meter serial tracking, grid synchronization, and PM Surya Ghar Muft Bijli Yojana subsidy claims.
-- **Module 12 — Customer Handover & Closure**: Handover dossier (`CHO-YYYY-000001`), punchlist resolution gate (unresolved MAJOR items block sign-off), 5-star customer feedback, 60-month warranty commencement, and project completion.
-- **Module 13 & 14 — Execution Cost Tracking & Reporting**: Expense logging (`CST-YYYY-000001`) across labor, equipment rental, logistics, and permits with category summaries.
-- **Mobile Technician Portal (`/technician`)**: Touch-friendly mobile interface designed for field technicians on rooftops with task progress updating, barcode scanning, safety checklist submission, and test measurement logging.
-- **Zero Mock Business Data Invariant**: Preserved 100% real database operations and RLS tenant scoping.
-- **Verification Baseline**:
-  - TypeScript: 0 errors across 7 workspace packages (`pnpm check-types`).
-  - Next.js Build: 62/62 static routes compiled cleanly (`pnpm build`).
-  - Test Suite: 45/45 test suites passing (174/174 tests — 100%).
-
----
-
-## 2. Phase 5 Implementation Matrix
-
-| Domain Module | Backend APIs (`/api/v1/installation`) | Frontend Screen (`apps/web`) | Database Tables | Status |
-| :--- | :--- | :--- | :--- | :---: |
-| **Execution Cockpit** | `/projects`, `/projects/:id`, `/projects/:id/status` | `/installation`, `/installation/projects`, `/installation/projects/[id]` | `project_initiations` | **COMPLETED & VERIFIED** |
-| **Technicians & Crews**| `/technicians`, `/crews`, `/crews/:id/assign` | `/installation/technicians` | `technician_profiles`, `technician_skills`, `technician_certifications`, `installation_crews`, `crew_members` | **COMPLETED & VERIFIED** |
-| **Site Scheduling** | `/schedules`, `/schedules/:id/reschedule` | `/installation/schedules` | `installation_schedules` | **COMPLETED & VERIFIED** |
-| **Site Readiness** | `/readiness`, `/projects/:id/readiness`, `/readiness/:id/exception` | `/installation/projects/[id]` | `site_readiness_records`, `site_readiness_checks` | **COMPLETED & VERIFIED** |
-| **Work Orders & Tasks**| `/work-orders`, `/work-orders/:id`, `/work-orders/:id/tasks/:key` | `/installation/work-orders`, `/installation/projects/[id]` | `installation_work_orders`, `installation_tasks`, `installation_milestones` | **COMPLETED & VERIFIED** |
-| **Material Custody** | `/handovers`, `/handovers/:id/lines/verify`, `/handovers/:id/accept`, `/consumption` | `/installation/material-handover`, `/installation/projects/[id]` | `project_material_handovers`, `material_handover_lines`, `material_consumptions`, `product_serials` | **COMPLETED & VERIFIED** |
-| **Safety & Stop-Work** | `/safety-records`, `/safety-records/:id/observations`, `/safety-records/:id/stop-work`, `/safety-records/:id/lift-stop-work`, `/incidents` | `/installation/safety-quality`, `/installation/projects/[id]` | `installation_safety_records`, `safety_checklist_items`, `safety_observations`, `safety_incidents` | **COMPLETED & VERIFIED** |
-| **Quality Inspections**| `/inspections`, `/inspections/:id/resolve-rework` | `/installation/safety-quality`, `/installation/projects/[id]` | `installation_quality_inspections`, `quality_inspection_items` | **COMPLETED & VERIFIED** |
-| **Testing & Commissioning** | `/commissioning`, `/commissioning/:id/tests`, `/commissioning/:id/approve`, `/commissioning/:id/reject` | `/installation/commissioning`, `/installation/projects/[id]` | `commissioning_records`, `commissioning_tests` | **COMPLETED & VERIFIED** |
-| **DISCOM Tracking** | `/utility-tracking`, `/projects/:id/utility-tracking`, `/utility-tracking/:id` | `/installation/discom`, `/installation/projects/[id]` | `utility_connection_trackings` | **COMPLETED & VERIFIED** |
-| **Customer Handover** | `/customer-handover`, `/projects/:id/customer-handover`, `/customer-handover/:id/punchlist`, `/customer-handover/:id/sign-off` | `/installation/handover`, `/installation/projects/[id]` | `customer_handovers`, `handover_punchlist_items`, `customer_handover_documents` | **COMPLETED & VERIFIED** |
-| **Project Costs** | `/costs`, `/projects/:id/costs`, `/projects/:id/cost-summary` | `/installation/projects/[id]` | `project_cost_records` | **COMPLETED & VERIFIED** |
-| **Mobile Tech Portal** | `/technician-portal/my-assignments`, `/technician-portal/tasks/:id/status`, `/technician-portal/serials/verify` | `/technician` | Mobile viewport shell | **COMPLETED & VERIFIED** |
-
----
-
-## 3. Master Platform Admin Control Center Implementation Matrix
-
-| Domain Module | Backend APIs (`/api/v1/platform-admin`) | Frontend Screen (`apps/web`) | Database Tables | Status |
-| :--- | :--- | :--- | :--- | :---: |
-| **Control Center Cockpit** | `/overview`, `/health`, `/analytics` | `/platform-admin/overview`, `/platform-admin/analytics`, `/platform-admin/resources` | Cross-tenant aggregates | **COMPLETED & VERIFIED** |
-| **Organization Lifecycle** | `/organizations`, `/organizations/:id`, `/organizations/:id/suspend`, `/organizations/:id/reactivate`, `/organizations/:id/subscription` | `/platform-admin/organizations`, `/platform-admin/organizations/[id]` | `organizations`, `organization_subscriptions`, `saas_plans` | **COMPLETED & VERIFIED** |
-| **Public Enquiries Inbox** | `/enquiries`, `/enquiries/:id`, `/enquiries/:id/status`, `/enquiries/:id/assign`, `/enquiries/:id/notes`, public `POST /enquiries` | `/platform-admin/enquiries`, `/contact` (real submission) | `platform_enquiries`, `platform_enquiry_activities`, `platform_sequences` | **COMPLETED & VERIFIED** |
-| **Customer Support Center** | `/support/tickets`, `/support/tickets/:id`, `/support/tickets/:id/reply`, `/support/tickets/:id/status`, `/support/tickets/:id/assign`, tenant `POST/GET /support/tickets` | `/platform-admin/support` | `support_tickets`, `support_ticket_messages` | **COMPLETED & VERIFIED** |
-| **Health & Alert Resolution** | `/health`, `/alerts`, `/alerts/:id/acknowledge`, `/alerts/:id/resolve` | `/platform-admin/health` | `platform_alerts` | **COMPLETED & VERIFIED** |
-| **Security Audit Stream** | `/audit-logs` | `/platform-admin/audit-logs` | `platform_audit_events` | **COMPLETED & VERIFIED** |
-| **Administrator Provisioning**| `/administrators`, `/administrators/:id`, `/plans` | `/platform-admin/administrators`, `/platform-admin/settings` | `platform_administrators`, `saas_plans` | **COMPLETED & VERIFIED** |
-
----
-
-## 4. Monorepo Test Baseline (47/47 Suites Passing — 187/187 Tests — 100%)
-
-| Test Suite | Tests | Result | Verification Scope |
-| :--- | :---: | :---: | :--- |
-| `platform-admin-core.spec.ts` | 6 | **PASS** | Overview KPIs, public enquiry intake (`ENQ-YYYY-000001`), enquiry assignment, organization suspension with reason, reactivation, system health latency, alert resolution (`ALT-YYYY-000001`) |
-| `platform-admin-support.spec.ts` | 4 | **PASS** | Tenant ticket submission (`TCK-YYYY-000001`), message threading, strict tenant RLS isolation hiding internal notes, platform support resolution |
-| `phase5-technician-crew-scheduling.spec.ts` | 4 | **PASS** | Technician profiles, skills, certifications, crew assembly, conflict-free scheduling & documented rescheduling |
-| `phase5-site-readiness-work-orders.spec.ts` | 4 | **PASS** | 12-point readiness check, mandatory check gating, supervisor exception, work order with 9 tasks & 7 milestones |
-| `phase5-material-handover-serials.spec.ts` | 4 | **PASS** | Material custody handover, serial verification, zero double stock deduction invariant, consumption logging to INSTALLED |
-| `phase5-safety-quality-inspections.spec.ts` | 7 | **PASS** | Toolbox talk, PPE verification, stop-work order (ON_HOLD), stop-work lifting, incident reporting, 7-stage quality gates, rework |
-| `phase5-commissioning-tests-approval.spec.ts` | 3 | **PASS** | Technical commissioning record with Voc/Isc, strict mandatory test failure gate, approval stamping serials commissionedAt |
-| `phase5-discom-customer-handover.spec.ts` | 6 | **PASS** | DISCOM utility tracking, net meter serial, PM Surya Ghar subsidy ID, punchlist resolution gate, 60-month warranty, cost tracking |
-| *Pre-existing Suites (Phases 0 - 4)* | 145 | **PASS** | Zero regression across Phase 0 (Infra), Phase 0.5 (RBAC/RLS), Phase 1 (CRM), Phase 2 (BOM/Sales), Phase 3 (Procurement/GRN), Phase 4 (Warehouse/Dispatch) |
+1. **Topology Preservation**:
+   - Customer Web & ERP: `http://localhost:3000`
+   - Platform Admin Control Center: `http://localhost:3001`
+   - Shared NestJS REST API: `http://localhost:4000`
+   - PostgreSQL Database: Native PostgreSQL 14 (`solaros_dev`)
+2. **Authenticated ERP User Identity**:
+   - Replaced fallback "SE" initials and "Solar Engineer" with real user name, dynamic initials, profile images, role badges, and active workspace context.
+   - Built an Odoo-style enterprise profile dropdown with Profile, Preferences, Organization, Branch, Permissions, Customer Support Desk, and Sign Out.
+   - Resolved session loss across navigation/reloads by persisting session tokens and tenant context in `localStorage`.
+   - Updated dashboard greeting to `Welcome back, {userName}.` with a clean loading skeleton.
+3. **Procurement Cockpit Refinement**:
+   - Header standardized to: Title: "Procurement", Subtitle: "Manage suppliers, purchasing and incoming materials."
+   - 4 compact operational KPIs: Purchase Orders Value, Pending Requisitions, Awaiting Approval, Orders In Transit.
+   - 6 compact operational shortcuts: Suppliers, Requisitions, RFQs, Purchase Orders, Goods Receipts, Serial Tracking.
+   - Fixed z-index collisions so dropdowns never overlap primary page actions.
+4. **Public Marketing Labels**:
+   - Capabilities registry accurately synchronised: completed modules (Phase 0 through Phase 5) labeled **LIVE**, while future roadmap modules (Warranty RMA, Project Profitability) are marked **COMING_SOON**.
+5. **Real Database-Backed Platform Owner Bootstrap**:
+   - Implemented `pnpm --filter @solaros/api platform:bootstrap-owner`.
+   - Bootstrapped `PLATFORM_OWNER` with Argon2id password hash, `isSuperAdmin = true`, and permissions `["*"]`.
+   - Logged immutable audit event into `platform_audit_events`.
+6. **Cross-Tenant RLS & Organization Discovery**:
+   - Solved root cause of 0 organizations appearing in Platform Admin: wrapped cross-tenant queries in `PlatformOrganizationsService`, `PlatformOverviewService`, and `PlatformAnalyticsService` within `this.prisma.asSuperAdmin(async (tx) => { ... })`.
+   - All 16 registered database organizations, users, branches, and memberships now display immediately.
+7. **Public Website Enquiries & Tenant Support Integration**:
+   - Public contact form (`/contact`) submits directly to `POST /api/v1/enquiries` and appears in Platform Admin (`http://localhost:3001/enquiries`).
+   - Customer ERP has an integrated `SupportTicketModal` for filing tickets; server derives `organizationId` from authenticated session context.
+   - Internal notes (`isInternalOnly = true`) are strictly filtered from tenant views.
+8. **Platform Admin UI Polish & Error Remediation**:
+   - Redesigned `http://localhost:3001/login`: empty default credentials, show/hide password toggle.
+   - Removed all Next.js dev overlay issues (the 10 failed 401 fetches) by enforcing proper authentication redirects and real database sessions.
+   - Topbar displays real Platform Administrator name and role.
+9. **Verification Baseline**:
+   - TypeScript: 0 errors across all 8 workspace packages (`pnpm check-types`).
+   - Next.js Build: 63/63 routes compiled on web, 17/17 routes compiled on platform-admin.
+   - Test Suite: 48/48 test suites passing (194/194 tests — 100%).

@@ -54,33 +54,34 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const storedAdmin =
       typeof window !== 'undefined' ? localStorage.getItem('solaros_platform_admin') : null;
 
-    if (!token && !storedAdmin) {
-      // In development fallback, create a default platform admin session if none exists
-      const defaultAdmin = {
-        id: 'admin-dev-01',
-        email: 'superadmin@sunpowersolutions.in',
-        firstName: 'Platform',
-        lastName: 'Director',
-        role: 'PLATFORM_OWNER',
-        permissions: ['*'],
-      };
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('solaros_platform_admin', JSON.stringify(defaultAdmin));
-        localStorage.setItem('solaros_platform_token', 'dev-platform-token');
-      }
-      ApiClient.setToken('dev-platform-token');
-      setAdminUser(defaultAdmin);
-      setLoading(false);
-    } else {
-      if (storedAdmin) {
-        try {
-          setAdminUser(JSON.parse(storedAdmin));
-        } catch {
-          // ignore
-        }
-      }
-      setLoading(false);
+    if (!token) {
+      router.push('/login');
+      return;
     }
+
+    if (storedAdmin) {
+      try {
+        setAdminUser(JSON.parse(storedAdmin));
+      } catch {
+        // ignore
+      }
+    }
+
+    // Verify session with backend
+    ApiClient.getMe()
+      .then((res) => {
+        if (res) {
+          setAdminUser(res);
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('solaros_platform_admin', JSON.stringify(res));
+          }
+        }
+        setLoading(false);
+      })
+      .catch(() => {
+        ApiClient.setToken(null);
+        router.push('/login');
+      });
 
     // Check actual infrastructure health
     ApiClient.getHealth()
