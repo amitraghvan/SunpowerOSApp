@@ -64,7 +64,7 @@ export default function GlobalUserDirectoryPage() {
             Global User Directory
           </h1>
           <p className="text-xs text-[#737B8B] mt-0.5">
-            Cross-tenant identity registry, organization affiliations, and security access states
+            Platform user directory, organization affiliations, and security access states
           </p>
         </div>
 

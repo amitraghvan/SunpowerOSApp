@@ -121,7 +121,7 @@ export default function PlatformOverviewPage() {
             </div>
             <div className="text-[11px] text-[#737B8B] mt-1.5 flex items-center gap-1">
               <ShieldCheck className="w-3.5 h-3.5 text-blue-500" />
-              <span>Multi-tenant isolated accounts</span>
+              <span>Active user accounts across organizations</span>
             </div>
           </div>
         </div>
@@ -139,7 +139,7 @@ export default function PlatformOverviewPage() {
               {loading ? '...' : metrics?.totalProjects ?? 0}
             </div>
             <div className="text-[11px] text-[#737B8B] mt-1.5">
-              <span>Rooftop & Commercial EPC Sites</span>
+              <span>Commercial & residential installations</span>
             </div>
           </div>
         </div>
@@ -157,7 +157,7 @@ export default function PlatformOverviewPage() {
               {loading ? '...' : `${metrics?.totalStorageMb ?? 0} MB`}
             </div>
             <div className="text-[11px] text-[#737B8B] mt-1.5">
-              <span>MinIO S3 Buckets across tenants</span>
+              <span>Documents & media storage</span>
             </div>
           </div>
         </div>
@@ -175,7 +175,7 @@ export default function PlatformOverviewPage() {
             </div>
             <div>
               <div className="text-xs font-semibold text-[#151A2B]">New Website Enquiries</div>
-              <div className="text-[11px] text-[#737B8B]">Public lead captures awaiting review</div>
+              <div className="text-[11px] text-[#737B8B]">Inbound website leads</div>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -196,7 +196,7 @@ export default function PlatformOverviewPage() {
             </div>
             <div>
               <div className="text-xs font-semibold text-[#151A2B]">Active Support Tickets</div>
-              <div className="text-[11px] text-[#737B8B]">Tenant customer inquiries open</div>
+              <div className="text-[11px] text-[#737B8B]">Open support requests</div>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -217,7 +217,7 @@ export default function PlatformOverviewPage() {
             </div>
             <div>
               <div className="text-xs font-semibold text-[#151A2B]">System Health & Alerts</div>
-              <div className="text-[11px] text-[#737B8B]">Infrastructure operational status</div>
+              <div className="text-[11px] text-[#737B8B]">System operational status</div>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -245,7 +245,7 @@ export default function PlatformOverviewPage() {
                 <TrendingUp className="w-4 h-4 text-[#714B67]" />
                 <span>Organization Onboarding Trajectory</span>
               </h2>
-              <p className="text-[11px] text-[#737B8B]">New tenant workspaces created per month</p>
+              <p className="text-[11px] text-[#737B8B]">New organizations registered per month</p>
             </div>
             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#F1EAF0] text-[#714B67]">
               PAST 6 MONTHS
@@ -255,7 +255,7 @@ export default function PlatformOverviewPage() {
           {/* Bar Chart Visualization / Clean Empty State Fallback */}
           <div className="pt-4 pb-2">
             {!hasGrowthData ? (
-              <div className="h-44 flex flex-col items-center justify-center rounded-xl border border-dashed border-[#E4E5E9] bg-[#FAFAFB]/80 p-6 text-center">
+              <div className="h-48 flex flex-col items-center justify-center rounded-xl border border-dashed border-[#E4E5E9] bg-[#FAFAFB]/80 p-6 text-center">
                 <div className="w-10 h-10 rounded-full bg-[#F1EAF0] text-[#714B67] flex items-center justify-center mb-2.5">
                   <TrendingUp className="w-5 h-5" />
                 </div>
@@ -263,25 +263,31 @@ export default function PlatformOverviewPage() {
                   No Monthly Growth History Yet
                 </div>
                 <p className="text-[11px] text-[#737B8B] max-w-sm mt-1">
-                  Once tenant organizations register on the platform, their onboarding trajectory
-                  across the past 6 months will be plotted here automatically.
+                  Once new organizations register on the platform, their monthly onboarding trends
+                  will appear here automatically.
                 </p>
               </div>
             ) : (
-              <div className="h-44 flex items-end justify-between gap-3 px-2 border-b border-[#E4E5E9]">
+              <div className="h-48 flex items-end justify-between gap-4 px-3 pt-6 pb-2 border-b border-[#E4E5E9]">
                 {metrics?.monthlyGrowth?.map((item: any, idx: number) => {
                   const max = Math.max(...metrics.monthlyGrowth.map((g: any) => g.count), 5);
-                  const heightPercent = Math.max(12, Math.round((item.count / max) * 100));
+                  const heightPercent = Math.max(10, Math.round((item.count / max) * 100));
                   return (
-                    <div key={idx} className="flex-1 flex flex-col items-center gap-2 group">
-                      <span className="text-[10px] font-bold text-[#151A2B] opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div key={idx} className="flex-1 h-full flex flex-col items-center justify-end group">
+                      <span className="text-[10px] font-bold text-[#714B67] opacity-80 group-hover:opacity-100 transition-opacity mb-1.5">
                         {item.count}
                       </span>
-                      <div
-                        style={{ height: `${heightPercent}%` }}
-                        className="w-full max-w-[36px] rounded-t-lg bg-[#714B67] group-hover:bg-[#5A3750] transition-colors relative"
-                      />
-                      <span className="text-[11px] font-semibold text-[#737B8B] uppercase">
+                      <div className="w-full h-28 flex items-end justify-center">
+                        <div
+                          style={{ height: `${heightPercent}%` }}
+                          className={`w-full max-w-[32px] rounded-t-md transition-all ${
+                            item.count > 0
+                              ? 'bg-[#714B67] group-hover:bg-[#5A3750] shadow-xs'
+                              : 'bg-[#E4E5E9]'
+                          }`}
+                        />
+                      </div>
+                      <span className="text-[11px] font-semibold text-[#737B8B] uppercase mt-2">
                         {item.month}
                       </span>
                     </div>
@@ -310,7 +316,7 @@ export default function PlatformOverviewPage() {
                 <FolderOpen className="w-7 h-7 text-[#8A92A6] mx-auto mb-1.5" />
                 <div className="text-xs font-semibold text-[#151A2B]">No Organizations Yet</div>
                 <p className="text-[10px] text-[#737B8B] mt-0.5">
-                  Tenant signups on Port 3000 will be listed here.
+                  Newly registered organizations will appear here.
                 </p>
               </div>
             ) : (

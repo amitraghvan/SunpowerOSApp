@@ -50,7 +50,7 @@ export default function PlatformAuditLogsPage() {
             Platform Security Audit Log
           </h1>
           <p className="text-xs text-[#737B8B] mt-0.5">
-            Immutable tracking of super administrator actions, tenant lifecycle changes and access controls
+            Immutable tracking of administrative actions, organization lifecycle events, and access controls
           </p>
         </div>
 

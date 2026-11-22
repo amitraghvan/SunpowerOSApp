@@ -64,7 +64,7 @@ export default function PlatformResourcesPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* MinIO Object Storage */}
+          {/* Object Storage */}
           <div className="bg-white rounded-2xl p-6 border border-[#E4E5E9] shadow-xs space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -72,7 +72,7 @@ export default function PlatformResourcesPage() {
                   <HardDrive className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-[#151A2B]">MinIO S3 Object Storage</h3>
+                  <h3 className="text-sm font-bold text-[#151A2B]">Object Storage Service</h3>
                   <p className="text-[11px] text-[#737B8B]">Site surveys, drawings, BOM & handovers</p>
                 </div>
               </div>
@@ -90,11 +90,11 @@ export default function PlatformResourcesPage() {
               </div>
               <div className="flex justify-between text-xs">
                 <span className="text-[#737B8B]">Storage Service Mode:</span>
-                <span className="font-semibold text-[#151A2B]">MinIO S3 Compatible</span>
+                <span className="font-semibold text-[#151A2B]">S3-Compatible Object Store</span>
               </div>
               <div className="flex justify-between text-xs">
-                <span className="text-[#737B8B]">Tenant Storage Isolation:</span>
-                <span className="font-semibold text-emerald-700">Enforced by Tenant Prefix</span>
+                <span className="text-[#737B8B]">Storage Isolation:</span>
+                <span className="font-semibold text-emerald-700">Enforced by Organization Prefix</span>
               </div>
             </div>
           </div>
@@ -107,8 +107,8 @@ export default function PlatformResourcesPage() {
                   <Database className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-[#151A2B]">PostgreSQL 14 Database</h3>
-                  <p className="text-[11px] text-[#737B8B]">Primary relational multi-tenant store</p>
+                  <h3 className="text-sm font-bold text-[#151A2B]">PostgreSQL Database</h3>
+                  <p className="text-[11px] text-[#737B8B]">Primary relational enterprise database</p>
                 </div>
               </div>
               <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-bold text-xs">

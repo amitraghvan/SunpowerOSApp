@@ -169,6 +169,9 @@ export class PlatformAuthService {
     return {
       id: admin.id,
       userId: admin.userId,
+      email: admin.user.email,
+      firstName: admin.user.firstName,
+      lastName: admin.user.lastName,
       role: admin.role,
       isActive: admin.isActive,
       permissions: admin.permissions,

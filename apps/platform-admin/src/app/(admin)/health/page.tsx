@@ -94,7 +94,7 @@ export default function PlatformHealthPage() {
 
         <div className="bg-white rounded-2xl p-5 border border-[#E4E5E9] shadow-xs space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[#737B8B]">MinIO Storage</span>
+            <span className="text-xs font-bold text-[#737B8B]">Object Storage</span>
             <HardDrive className="w-4 h-4 text-purple-600" />
           </div>
           <div className="flex items-center gap-2">

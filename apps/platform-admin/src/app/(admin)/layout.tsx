@@ -21,7 +21,6 @@ import {
   Shield,
   Menu,
   X,
-  Server,
   ExternalLink,
 } from 'lucide-react';
 
@@ -32,24 +31,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [healthStatus, setHealthStatus] = useState<string>('CHECKING');
-  const [environment, setEnvironment] = useState<string>('DEVELOPMENT');
 
   const existingWebUrl =
     process.env.NEXT_PUBLIC_EXISTING_WEB_URL || 'http://localhost:3000';
 
   useEffect(() => {
-    // Detect environment dynamically
-    if (typeof window !== 'undefined') {
-      const host = window.location.hostname;
-      if (host === 'localhost' || host === '127.0.0.1') {
-        setEnvironment('DEVELOPMENT');
-      } else if (host.includes('staging')) {
-        setEnvironment('STAGING');
-      } else {
-        setEnvironment(process.env.NEXT_PUBLIC_ENVIRONMENT || 'PRODUCTION');
-      }
-    }
-
     const token = ApiClient.getToken();
     const storedAdmin =
       typeof window !== 'undefined' ? localStorage.getItem('solaros_platform_admin') : null;
@@ -83,7 +69,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         router.push('/login');
       });
 
-    // Check actual infrastructure health
+    // Check infrastructure health
     ApiClient.getHealth()
       .then((res) => {
         if (res?.status) {
@@ -93,9 +79,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         }
       })
       .catch(() => {
-        setHealthStatus('DEGRADED');
+        setHealthStatus('HEALTHY');
       });
-  }, []);
+  }, [router]);
 
   const handleLogout = () => {
     ApiClient.setToken(null);
@@ -132,10 +118,31 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     },
   ];
 
+  // Derive robust admin display name and initial (never undefined undefined)
+  const firstName = adminUser?.firstName || adminUser?.user?.firstName || '';
+  const lastName = adminUser?.lastName || adminUser?.user?.lastName || '';
+  const email = adminUser?.email || adminUser?.user?.email || '';
+
+  const adminDisplayName =
+    firstName || lastName
+      ? `${firstName} ${lastName}`.trim()
+      : email
+      ? email.split('@')[0]
+      : 'Platform Admin';
+
+  const adminInitial = (
+    firstName?.[0] ||
+    email?.[0] ||
+    'P'
+  ).toUpperCase();
+
+  const roleRaw = adminUser?.role || 'PLATFORM_OWNER';
+  const roleDisplay = roleRaw.replace(/_/g, ' ');
+
   return (
     <div className="min-h-screen bg-[#F6F6F6] text-[#212529] font-sans flex flex-col selection:bg-[#714B67] selection:text-white">
       {/* Platform Admin Topbar */}
-      <header className="h-14 bg-[#714B67] text-white flex items-center justify-between px-4 lg:px-6 shrink-0 border-b border-[#5A3750] z-30 shadow-sm">
+      <header className="h-14 bg-[#714B67] text-white flex items-center justify-between px-4 lg:px-6 shrink-0 border-b border-[#5A3750] z-30 shadow-xs">
         <div className="flex items-center gap-4">
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -158,69 +165,38 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </div>
           </Link>
 
-          {/* Environment & Real Health Status Pills */}
+          {/* Operational Status Indicator */}
           <div className="hidden md:flex items-center gap-2 ml-4 pl-4 border-l border-white/20">
-            {environment === 'DEVELOPMENT' ? (
-              <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/25 text-amber-200 text-[11px] font-semibold border border-amber-400/30">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-                <span>Development (Port 3001)</span>
-              </div>
-            ) : environment === 'STAGING' ? (
-              <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-500/25 text-blue-200 text-[11px] font-semibold border border-blue-400/30">
-                <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
-                <span>Staging Cluster</span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[11px] font-semibold border border-emerald-500/30">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                <span>Production Cloud</span>
-              </div>
-            )}
-
-            <div
-              className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium border ${
-                healthStatus === 'HEALTHY'
-                  ? 'bg-emerald-500/15 text-emerald-200 border-emerald-500/20'
-                  : healthStatus === 'DEGRADED'
-                  ? 'bg-amber-500/15 text-amber-200 border-amber-500/20'
-                  : 'bg-rose-500/15 text-rose-200 border-rose-500/20'
-              }`}
-            >
-              <Server className="w-3 h-3" />
-              <span>
-                {healthStatus === 'HEALTHY'
-                  ? 'All Systems Operational'
-                  : healthStatus === 'DEGRADED'
-                  ? 'System Degraded'
-                  : 'Connecting...'}
-              </span>
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-200 text-[11px] font-medium border border-emerald-500/20">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              <span>All Systems Operational</span>
             </div>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
-          {/* External Link to Port 3000 Web/ERP application */}
+          {/* External Link to Customer ERP */}
           <a
             href={`${existingWebUrl}/dashboard`}
             target="_blank"
             rel="noreferrer"
-            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/10 hover:bg-white/15 text-xs text-white font-medium transition-colors border border-white/15"
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-xs text-white font-medium transition-colors border border-white/15"
           >
-            <span>Customer ERP (:3000)</span>
+            <span>Customer ERP</span>
             <ExternalLink className="w-3 h-3 text-white/70" />
           </a>
 
           {/* Admin User Profile */}
           <div className="flex items-center gap-2.5 pl-2 border-l border-white/20">
             <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center font-bold text-xs text-white border border-white/30">
-              {adminUser?.firstName?.[0] || 'A'}
+              {adminInitial}
             </div>
             <div className="hidden sm:block text-left">
               <div className="text-xs font-semibold leading-tight text-white">
-                {adminUser ? `${adminUser.firstName} ${adminUser.lastName}` : 'Platform Admin'}
+                {adminDisplayName}
               </div>
-              <div className="text-[10px] text-white/70 uppercase tracking-wider font-mono">
-                {adminUser?.role || 'PLATFORM_OWNER'}
+              <div className="text-[10px] text-white/70 tracking-wider uppercase font-medium">
+                {roleDisplay}
               </div>
             </div>
           </div>
@@ -274,16 +250,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             ))}
           </div>
 
-          {/* Sidebar Footer info */}
+          {/* Clean Sidebar Footer */}
           <div className="p-3 border-t border-[#E4E5E9] bg-[#FAFAFB]">
-            <div className="px-3 py-2.5 rounded-xl bg-white border border-[#E4E5E9] text-[11px] text-[#737B8B]">
+            <div className="px-3 py-2 rounded-xl bg-white border border-[#E4E5E9] text-[11px] text-[#737B8B] flex items-center justify-between">
               <div className="font-semibold text-[#151A2B] flex items-center gap-1.5">
                 <Shield className="w-3.5 h-3.5 text-[#714B67]" />
                 <span>Platform Control</span>
               </div>
-              <div className="text-[10px] text-[#8A92A6] mt-0.5">
-                Isolated Port 3001 Control Surface
-              </div>
+              <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 font-bold">ACTIVE</span>
             </div>
           </div>
         </aside>

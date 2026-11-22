@@ -80,7 +80,7 @@ export default function PlatformOrganizationsPage() {
   };
 
   const handleReactivate = async (orgId: string) => {
-    if (!confirm('Reactivate this organization and restore tenant workspace access?')) return;
+    if (!confirm('Reactivate this organization and restore workspace access?')) return;
     setLoading(true);
     try {
       await ApiClient.reactivateOrganization(orgId);

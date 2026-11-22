@@ -28,7 +28,7 @@ export default function PlatformAdminCatchAllRedirectPage() {
         <div>
           <h1 className="text-xl font-bold text-[#151A2B]">Redirecting...</h1>
           <p className="text-xs text-[#737B8B] mt-1.5 leading-relaxed">
-            Redirecting to dedicated Platform Admin on Port 3001:
+            Please wait while you are redirected to the Platform Control Center.
           </p>
         </div>
 
@@ -36,7 +36,7 @@ export default function PlatformAdminCatchAllRedirectPage() {
           href={`${adminUrl}/${targetPath}`}
           className="w-full py-3 rounded-xl bg-[#714B67] hover:bg-[#5A3750] text-white font-semibold text-xs flex items-center justify-center gap-2 transition-colors shadow-sm"
         >
-          <span>Continue to {adminUrl}/{targetPath}</span>
+          <span>Continue to Platform Control Center</span>
           <ExternalLink className="w-4 h-4" />
         </a>
       </div>

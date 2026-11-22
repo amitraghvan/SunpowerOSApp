@@ -142,7 +142,7 @@ export default function PlatformSupportCenterPage() {
             Customer Support Center
           </h1>
           <p className="text-xs text-[#737B8B] mt-0.5">
-            Resolve tenant operational issues, technical requests, and enterprise support inquiries
+            Resolve customer operational issues, technical requests, and enterprise support inquiries
           </p>
         </div>
 
@@ -412,7 +412,7 @@ export default function PlatformSupportCenterPage() {
                   placeholder={
                     isInternalOnly
                       ? 'Add private note visible only to Platform Administrators...'
-                      : 'Type response to tenant customer...'
+                      : 'Type response to customer...'
                   }
                   className="w-full px-3.5 py-2.5 rounded-xl border border-[#E4E5E9] text-xs focus:ring-2 focus:ring-[#714B67]"
                 />

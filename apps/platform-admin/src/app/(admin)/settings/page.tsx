@@ -105,7 +105,7 @@ export default function PlatformSettingsPage() {
                   <div className="flex items-center justify-between text-[#475065]">
                     <span className="flex items-center gap-1.5">
                       <HardDrive className="w-3.5 h-3.5 text-[#8A92A6]" />
-                      <span>MinIO Storage:</span>
+                      <span>Object Storage:</span>
                     </span>
                     <span className="font-bold text-[#151A2B]">
                       {Math.round(p.maxStorageMb / 1024)} GB ({p.maxStorageMb} MB)
@@ -139,7 +139,7 @@ export default function PlatformSettingsPage() {
               <div className="pt-4 border-t border-[#E4E5E9] flex items-center justify-between text-xs text-[#737B8B]">
                 <span>Active Subscriptions:</span>
                 <span className="font-bold text-[#151A2B]">
-                  {p._count?.subscriptions ?? 0} tenants
+                  {p._count?.subscriptions ?? 0} organizations
                 </span>
               </div>
             </div>

@@ -44,7 +44,7 @@ export default function PlatformAnalyticsPage() {
             SaaS Platform Analytics
           </h1>
           <p className="text-xs text-[#737B8B] mt-0.5">
-            Cross-tenant adoption, subscription tier distribution and customer engagement metrics
+            Platform adoption, subscription tier distribution and customer engagement metrics
           </p>
         </div>
 
@@ -161,7 +161,7 @@ export default function PlatformAnalyticsPage() {
 
               <div className="space-y-3">
                 {!data?.topOrganizationsByProjects || data.topOrganizationsByProjects.length === 0 ? (
-                  <div className="text-xs text-[#8A92A6] py-4 text-center">No tenant projects recorded yet.</div>
+                  <div className="text-xs text-[#8A92A6] py-4 text-center">No projects recorded yet.</div>
                 ) : (
                   data?.topOrganizationsByProjects?.map((org: any) => (
                     <div key={org.id} className="flex items-center justify-between p-3.5 rounded-xl border border-[#E4E5E9] bg-[#FAFAFB]">
@@ -187,13 +187,13 @@ export default function PlatformAnalyticsPage() {
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-bold text-[#151A2B] flex items-center gap-2">
                   <Users className="w-4 h-4 text-blue-600" />
-                  <span>Top Tenants by User Team Size</span>
+                  <span>Top Organizations by Team Size</span>
                 </h3>
               </div>
 
               <div className="space-y-3">
                 {!data?.topOrganizationsByUsers || data.topOrganizationsByUsers.length === 0 ? (
-                  <div className="text-xs text-[#8A92A6] py-4 text-center">No tenant users recorded yet.</div>
+                  <div className="text-xs text-[#8A92A6] py-4 text-center">No users recorded yet.</div>
                 ) : (
                   data?.topOrganizationsByUsers?.map((org: any) => (
                     <div key={org.id} className="flex items-center justify-between p-3.5 rounded-xl border border-[#E4E5E9] bg-[#FAFAFB]">
